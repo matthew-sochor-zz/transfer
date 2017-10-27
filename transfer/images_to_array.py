@@ -6,13 +6,16 @@ import numpy as np
 from keras.preprocessing.image import load_img
 
 
-def images_to_array(source_path, img_size):
-
-    img_dim = 224 * img_size
+def images_to_array(project):
+    
+    img_dim = 224 * project['img_size']
     print('Converting test images to array')
-    val_images_to_array(source_path, 'test', img_dim)
+    val_images_to_array(project['path'], 'test', img_dim)
     print('Converting train images to array')
-    val_images_to_array(source_path, 'train', img_dim)
+    val_images_to_array(project['path'], 'train', img_dim)
+
+    project['is_array'] = True
+    return project
 
 
 def val_images_to_array(source_path, val_group, img_dim):

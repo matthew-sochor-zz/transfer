@@ -50,9 +50,10 @@ def configure():
                'is_array': False,
                'is_augmented': False,
                'is_pre_model': False,
-               'model_round': 1,
-               'model': None,
-               'mod_model': None}
+               'model_round': 0,
+               'last_weights': None,
+               'best_weights': None,
+               'seed': None}
                
     config.append(project)
     store_config(config)

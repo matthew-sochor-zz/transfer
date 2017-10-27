@@ -6,7 +6,7 @@ import numpy as np
 from tqdm import tqdm
 
 
-def split_all(source_path, test_percent = 10, seed = None):
+def split_all(project):
     '''
     Randomly split files in test and train
 
@@ -14,14 +14,22 @@ def split_all(source_path, test_percent = 10, seed = None):
         source_path (str): system path where all images are located
         test_fraction (int, Default 10): Fraction of images to assign to test set (should be 0 < test_fraction < 100)
         seed (int, Default None): Seed for random splits
+    
+    Returns:
+        project (dict): Project state
     '''
     
+    source_path = project['path']
+
     img_classes = [d for d in os.listdir(source_path) if os.path.isdir(os.path.join(source_path,d))]
     test_path = make_paths(source_path, 'test', img_classes)
     train_path = make_paths(source_path, 'train', img_classes)
 
     for img_class in img_classes:
-        split_group(source_path, img_class, test_path, train_path, test_percent, seed)
+        split_group(source_path, img_class, test_path, train_path, project['test_percent'], project['seed'])
+    
+    project['is_split'] = True
+    return project
 
 
 def split_group(source_path, group_name, test_path, train_path, test_percent, seed):

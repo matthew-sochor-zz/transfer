@@ -1,4 +1,5 @@
 import os
+from subprocess import call
 
 import numpy as np
 from keras.layers import Input, Activation, AveragePooling2D, GlobalAveragePooling2D, BatchNormalization, Dropout, Dense
@@ -20,23 +21,29 @@ def pop_layer(model, count=1):
     else:
         model.layers[-1].outbound_nodes = []
         model.outputs = [model.layers[-1].output]
-    model.built = False
+
+    model.container_nodes = sorted([l.name for l in model.layers])
+    model.built = True
 
     return popped, model
 
 
-def get_pre_model(img_dim):
+def get_resnet_model(img_dim):
     array_input = Input(shape=(img_dim, img_dim, 3))
     resnet = ResNet50(include_top=False, 
                      weights='imagenet',
                      input_tensor=array_input,
                      pooling='avg')
+    return resnet
 
+
+def get_pre_model(img_dim):
+    resnet = get_resnet_model(img_dim)
     popped, pre_model = pop_layer(resnet, 12)
     return popped, pre_model
 
 
-def get_post_model(img_dim, conv_dim, number_categories, model_weights = None):
+def get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = None):
 
     popped, pre_model = get_pre_model(img_dim)
 
@@ -65,9 +72,37 @@ def get_post_model(img_dim, conv_dim, number_categories, model_weights = None):
     x = Dropout(0.2)(x)
     x = Dense(number_categories, activation='softmax')(x)
 
-    model = Model(x_in, x)
+    post_model = Model(x_in, x)
     if model_weights is not None:
         print('Loading model weights:', model_weights)
-        model.load_weights(model_weights)
+        post_model.load_weights(model_weights)
 
-    return model
+    return pre_model, post_model
+
+
+def get_final_model(img_dim, conv_dim, number_categories, weights):
+
+    pre_model, post_model = get_pre_post_model(img_dim, conv_dim, number_categories, weights)
+
+    x_in = Input(shape = (img_dim, img_dim, 3))
+    x = pre_model(x_in)
+    x = post_model(x)
+    final_model = Model(x_in, x)
+    return final_model
+
+
+def export_model(project):
+    model_name = project['name'] + '-' + str(project['model_round']) +'.hdf5'
+    last_model_name = 'last-' + model_name
+    best_model_name = 'best-' + model_name
+    model_path = os.path.join(project['path'], '..', 'model')
+    call(['mkdir', '-p', model_path])
+
+    img_dim = 224 * project['img_size']
+    conv_dim = 7 * project['img_size']
+
+    last_model = get_final_model(img_dim, conv_dim, project['number_categories'], project['last_weights'])
+    best_model = get_final_model(img_dim, conv_dim, project['number_categories'], project['best_weights'])
+    
+    last_model.save(os.path.join(model_path, last_model_name))
+    best_model.save(os.path.join(model_path, best_model_name))

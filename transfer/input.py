@@ -14,9 +14,9 @@ def int_input(message, low, high, show_range = True):
     returns:
         int_in (int): Input integer
     '''
-    
-    int_in = low
-    while (int_in <= low) or (int_in >= high): 
+
+    int_in = low - 1
+    while (int_in < low) or (int_in > high):
         if show_range:
             suffix = ' (integer between ' + str(low) + ' and ' + str(high) + ')'
         else:
@@ -42,11 +42,46 @@ def float_input(message, low, high):
         float_in (int): Input float
     '''
 
-    float_in = low
-    while (float_in <= low) or (float_in >= high):
+    float_in = low - 1.0
+    while (float_in < low) or (float_in > high):
         inp = input('Enter a ' + message + ' (float between ' + str(low) + ' and ' + str(high) + '): ')
         if re.match('^([0-9]*[.])?[0-9]+$', inp) is not None:
             float_in = float(inp)
         else:
             print('Must be a float, try again!')
     return float_in
+
+def bool_input(message):
+    '''
+    Ask a user for a boolean input
+
+    args:
+        message (str): Prompt for user
+
+    returns:
+        bool_in (boolean): Input boolean
+    '''
+
+    while True:
+        suffix = ' (true or false): '
+        inp = input(message + suffix)
+        if inp.lower() == 'true':
+            return True
+        elif inp.lower() == 'false':
+            return False
+        else:
+            print('Must be either true or false, try again!')
+
+def str_input(message, inputs = None):
+
+    user_str = None
+    while user_str is None:
+        inp = input(message)
+        if inputs is None:
+            user_str = inp
+        elif inp in inputs:
+            user_str = inp
+        else:
+            print('Invalid input, should be one of:')
+            print(inputs)
+    return user_str

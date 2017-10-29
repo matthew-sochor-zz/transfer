@@ -8,6 +8,7 @@ from transfer.split import split_all
 from transfer.project import configure, select_project, update_config
 from transfer import images_to_array, pre_model
 from transfer.model import train_model, predict_model
+from transfer.augment_arrays import augment_arrays
 
 def main(args = None):
     '''
@@ -62,20 +63,24 @@ def main(args = None):
         return
     else:
         project = select_project(args.project)
-        
+
     if args.run:
         if project['is_split'] == False:
             project = split_all(project)
             update_config(project)
-        
+
         if project['is_array'] == False:
             project = images_to_array(project)
             update_config(project)
-        
+
+        if project['is_augmented'] == False:
+            project = augment_arrays(project)
+            update_config(project)
+
         if project['is_pre_model'] == False:
             project = pre_model(project)
             update_config(project)
-        
+
         project = train_model(project)
         update_config(project)
 
@@ -114,5 +119,3 @@ def main(args = None):
             print('')
             print('    transfer --run')
             print('')
-
-    

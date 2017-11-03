@@ -14,20 +14,21 @@ def split_all(project):
         source_path (str): system path where all images are located
         test_fraction (int, Default 10): Fraction of images to assign to test set (should be 0 < test_fraction < 100)
         seed (int, Default None): Seed for random splits
-    
+
     Returns:
         project (dict): Project state
     '''
-    
-    source_path = project['path']
+
+    source_path = project['img_path']
+    dest_path = project['path']
 
     img_classes = [d for d in os.listdir(source_path) if os.path.isdir(os.path.join(source_path,d))]
-    test_path = make_paths(source_path, 'test', img_classes)
-    train_path = make_paths(source_path, 'train', img_classes)
+    test_path = make_paths(dest_path, 'test', img_classes)
+    train_path = make_paths(dest_path, 'train', img_classes)
 
     for img_class in img_classes:
         split_group(source_path, img_class, test_path, train_path, project['test_percent'], project['seed'])
-    
+
     project['is_split'] = True
     return project
 
@@ -46,9 +47,9 @@ def split_group(source_path, group_name, test_path, train_path, test_percent, se
     '''
 
     images = os.listdir(source_path + '/' + group_name)
-    images = [f for f in images 
-              if (f.find('.jpg') > -1) or 
-                 (f.find('.jpeg') > -1) or 
+    images = [f for f in images
+              if (f.find('.jpg') > -1) or
+                 (f.find('.jpeg') > -1) or
                  (f.find('.png') > -1)]
 
     index = int(len(images) * test_percent / 100.0)
@@ -75,12 +76,12 @@ def make_paths(source_path, val_group, img_classes):
         source_path (str): system path where all images are located
         val_group (str): test or train
         img_classes (list[str]): image classes
-    
+
     returns:
         val_path (str): system path where all split images are located
     '''
 
-    val_path = os.path.join(source_path, '..', 'split', val_group)
+    val_path = os.path.join(source_path, 'split', val_group)
     call(['rm', '-rf', val_path])
     call(['mkdir', '-p', val_path])
     for img_class in img_classes:

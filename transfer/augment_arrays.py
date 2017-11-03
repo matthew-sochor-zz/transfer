@@ -48,8 +48,8 @@ def gen_augment_arrays(array, label, augmentations):
 
 def augment_arrays(project):
 
-    array_path = os.path.join(project['path'], '..', 'array', 'train')
-    augmented_path = os.path.join(project['path'], '..', 'augmented', 'train')
+    array_path = os.path.join(project['path'], 'array', 'train')
+    augmented_path = os.path.join(project['path'], 'augmented', 'train')
     call(['rm', '-rf', augmented_path])
     call(['mkdir', '-p', augmented_path])
 
@@ -58,10 +58,10 @@ def augment_arrays(project):
         files = os.listdir(array_path)
         for file in tqdm(files):
             call(['cp', os.path.join(array_path, file), augmented_path])
-    
+
     else:
         print('Generating image augmentations')
-        categories = sorted(os.listdir(project['path']))
+        categories = sorted(os.listdir(project['img_path']))
 
         for img_idx, (array, label) in tqdm(enumerate(gen_arrays_from_dir(array_path))):
             for aug_idx, (array_aug, label_aug) in enumerate(gen_augment_arrays(array, label, project['augmentations'])):

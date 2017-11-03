@@ -22,20 +22,20 @@ def gen_array_from_dir(array_dir):
 
 
 def pre_model(project):
-    
+
     img_dim = 224 * project['img_size']
     print('Predicting pre-model for test')
     val_pre_model(project['path'], 'array', 'test', img_dim)
     print('Predicting pre-model for train')
     val_pre_model(project['path'], 'augmented', 'train', img_dim)
-    
+
     project['is_pre_model'] = True
     return project
 
 def val_pre_model(source_path, folder, val_group, img_dim):
 
-    array_path = os.path.join(source_path, '..', folder, val_group)
-    pre_model_path = os.path.join(source_path, '..', 'pre_model', val_group)
+    array_path = os.path.join(source_path, folder, val_group)
+    pre_model_path = os.path.join(source_path, 'pre_model', val_group)
     call(['rm', '-rf', pre_model_path])
     call(['mkdir', '-p', pre_model_path])
 

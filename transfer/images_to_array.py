@@ -7,25 +7,25 @@ from keras.preprocessing.image import load_img
 
 
 def images_to_array(project):
-    
+
     img_dim = 224 * project['img_size']
     print('Converting test images to array')
-    val_images_to_array(project['path'], 'test', img_dim)
+    val_images_to_array(project['img_path'], project['path'], 'test', img_dim)
     print('Converting train images to array')
-    val_images_to_array(project['path'], 'train', img_dim)
+    val_images_to_array(project['img_path'], project['path'], 'train', img_dim)
 
     project['is_array'] = True
     return project
 
 
-def val_images_to_array(source_path, val_group, img_dim):
+def val_images_to_array(img_path, source_path, val_group, img_dim):
 
-    split_path = os.path.join(source_path, '..', 'split', val_group)
-    array_path = os.path.join(source_path, '..', 'array', val_group)
+    split_path = os.path.join(source_path, 'split', val_group)
+    array_path = os.path.join(source_path, 'array', val_group)
     call(['rm', '-rf', array_path])
     call(['mkdir', '-p', array_path])
 
-    categories = sorted([d for d in os.listdir(source_path) if os.path.isdir(os.path.join(source_path,d))])
+    categories = sorted([d for d in os.listdir(img_path) if os.path.isdir(os.path.join(img_path, d))])
 
     print('Iterating over all categories: ', categories)
 

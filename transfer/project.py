@@ -32,7 +32,15 @@ def configure():
         else:
             config = [project for project in config if project_name != project['name']]
 
-    image_path = input('Select parent directory for your images: ')
+    image_path = os.path.expanduser(input('Select parent directory for your images: '))
+    path_unset = True
+    while path_unset:
+        project_path = os.path.expanduser(input('Select destination for your project: '))
+        if (project_path.find(image_path) == 0):
+            print('Project destination should not be same or within image directory!')
+        else:
+            path_unset = False
+
     image_path = image_path.replace('~', home)
     test_percent = int_input('percentage of trips to assign to test (suggested: 20)', 1, 50)
     batch_size = int_input('batch size (suggested: 8)', 1, 64)
@@ -55,13 +63,16 @@ def configure():
         augmentations = select_augmentations()
     else:
         augmentations = None
-        
+
     project = {'name': project_name,
-               'path': image_path,
+               'img_path': image_path,
+               'path': project_path,
                'test_percent': test_percent,
                'batch_size': batch_size,
-               'learning_rate': learning_rate,
-               'learning_rate_modifier': learning_rate_modifier,
+               'resnet_learning_rate': learning_rate,
+               'extra_learning_rate': learning_rate,
+               'resnet_learning_rate_modifier': learning_rate_modifier,
+               'extra_learning_rate_modifier': learning_rate_modifier,
                'epochs': num_epochs,
                'img_size': img_size,
                'augmentations': augmentations,
@@ -70,12 +81,22 @@ def configure():
                'is_augmented': False,
                'is_pre_model': False,
                'model_round': 0,
-               'last_weights': None,
-               'best_weights': None,
+               'resnet_last_weights': None,
+               'extra_last_weights': None,
+               'resnet_best_weights': None,
+               'extra_best_weights': None,
                'seed': None}
-               
+
     config.append(project)
     store_config(config)
+    print('')
+    print('Project configure saved!')
+    print('')
+    print('To run project:')
+    print('')
+    print('    transfer --run --project ' + project_name)
+    print('or')
+    print('    transfer -r -p ' + project_name)
 
 
 def select_augmentations():
@@ -104,7 +125,7 @@ def select_augmentations():
     rescale = int_input('rescale: rescaling factor. If None or 0, no rescaling is applied, otherwise we multiply the data by the value provided.', 0, 255)
     if rescale == 0:
         rescale = None
-    
+
     augmentations = {'rounds': rounds,
                      'featurewise_center': featurewise_center,
                      'featurewise_std_normalization': featurewise_std_normalization,
@@ -131,7 +152,7 @@ def select_project(user_provided_project):
 
     args:
         user_provided_project (str): Project name that should match a project in the config
-    
+
     returns:
         project (dict): Configuration settings for a user selected project
 
@@ -169,7 +190,7 @@ def store_config(config):
     Store configuration
 
     args:
-        config (list[dict]): configurations for each project 
+        config (list[dict]): configurations for each project
     '''
     home = os.path.expanduser('~')
 
@@ -195,7 +216,7 @@ def update_config(updated_project):
         for i, project in enumerate(projects):
             if project['name'] == updated_project['name']:
                 replace_index = i
-        
+
         if replace_index > -1:
             projects[replace_index] = updated_project
             store_config(projects)

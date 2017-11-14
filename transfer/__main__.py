@@ -4,12 +4,14 @@ import os
 
 import yaml
 import keras
+from colorama import init
+from termcolor import colored
 
 from transfer.split import split_all
 from transfer.project import configure, select_project, update_config
 from transfer import images_to_array, pre_model
 from transfer.model import train_model
-from transfer.predict_model import predict_model
+from transfer.predict_model import predict_model, predict_activation_model
 from transfer.augment_arrays import augment_arrays
 
 def main(args = None):
@@ -107,39 +109,40 @@ def main(args = None):
         update_config(project)
 
         print('')
-        print('Completed modeling round: ', project['model_round'])
-        print('Best current model: ', project['resnet_best_weights'])
-        print('Last current model: ', project['resnet_last_weights'])
+        print(colored('Completed modeling round: ' + project['model_round'], 'cyan'))
+        print('')
+        print('Best current model: ', colored(project['resnet_best_weights'], 'yellow'))
+        print('Last current model: ', colored(project['resnet_last_weights'], 'yellow'))
         print('')
         print('To further refine the model, run again with:')
         print('')
-        print('    transfer --run')
+        print(colored('    transfer --run', 'green'))
         print('')
 
     elif args.best_predict is not None:
         if project['resnet_best_weights'] is not None:
             if args.best_predict == 'default':
                 args.best_predict = project['img_path']
-            print('Predicting from current best model: ', project['resnet_best_weights'])
-            print('Predicting on image(s) in: ', args.best_predict)
+            print('Predicting from current best model: ', colored(project['resnet_best_weights'], 'yellow'))
+            print('Predicting on image(s) in: ', colored(args.best_predict, 'yellow'))
             predict_model(project, 'resnet_best_weights', args.best_predict)
         else:
             print('Model is not trained.  Please first run your project:')
             print('')
-            print('    transfer --run')
+            print(colored('    transfer --run', 'green'))
             print('')
 
     elif args.last_predict is not None:
         if project['resnet_last_weights'] is not None:
             if args.last_predict == 'default':
                 args.last_predict = project['img_path']
-            print('Predicting from current last model: ', project['resnet_last_weights'])
-            print('Predicting on image(s) in: ', args.last_predict)
+            print('Predicting from current last model: ', colored(project['resnet_last_weights'], 'yellow'))
+            print('Predicting on image(s) in: ', colored(args.last_predict, 'yellow'))
             predict_model(project, 'resnet_last_weights', args.last_predict)
         else:
             print('Model is not trained.  Please first run your project:')
             print('')
-            print('    transfer --run')
+            print(colored('    transfer --run', 'green'))
             print('')
 
 
@@ -148,13 +151,13 @@ def main(args = None):
         if project['extra_best_weights'] is not None:
             if args.best_predict_activation == 'default':
                 args.best_predict_activation = project['img_path']
-            print('Predicting activation from current best model: ', project['extra_best_weights'])
-            print('Predicting on image(s) in: ', args.best_predict_activation)
+            print('Predicting activation from current best model: ', colored(project['extra_best_weights'], 'yellow'))
+            print('Predicting on image(s) in: ', colored(args.best_predict_activation, 'yellow'))
             predict_activation_model(project, 'extra_best_weights', args.best_predict_activation)
         else:
             print('Model is not trained.  Please first run your project:')
             print('')
-            print('    transfer --run')
+            print(colored('    transfer --run', 'green'))
             print('')
 
     elif args.last_predict_activation is not None:
@@ -162,11 +165,11 @@ def main(args = None):
         if project['extra_last_weights'] is not None:
             if args.last_predict_activation == 'default':
                 args.last_predict_activation = project['img_path']
-            print('Predicting activation from current last model: ', project['extra_last_weights'])
-            print('Predicting on image(s) in: ', args.last_predict_activation)
+            print('Predicting activation from current last model: ', colored(project['extra_last_weights'], 'yellow'))
+            print('Predicting on image(s) in: ', colored(args.last_predict_activation, 'yellow'))
             predict_activation_model(project, 'extra_last_weights', args.last_predict_activation)
         else:
             print('Model is not trained.  Please first run your project:')
             print('')
-            print('    transfer --run')
+            print(colored('    transfer --run', 'green'))
             print('')

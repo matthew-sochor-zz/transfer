@@ -1,3 +1,6 @@
+from colorama import init
+from termcolor import colored
+
 import re
 
 
@@ -25,7 +28,7 @@ def int_input(message, low, high, show_range = True):
         if re.match('^[0-9]+$', inp) is not None:
             int_in = int(inp)
         else:
-            print('Must be an integer, try again!')
+            print(colored('Must be an integer, try again!', 'red'))
     return int_in
 
 
@@ -48,7 +51,7 @@ def float_input(message, low, high):
         if re.match('^([0-9]*[.])?[0-9]+$', inp) is not None:
             float_in = float(inp)
         else:
-            print('Must be a float, try again!')
+            print(colored('Must be a float, try again!', 'red'))
     return float_in
 
 def bool_input(message):
@@ -70,7 +73,7 @@ def bool_input(message):
         elif inp.lower() == 'false':
             return False
         else:
-            print('Must be either true or false, try again!')
+            print(colored('Must be either true or false, try again!', 'red'))
 
 def str_input(message, inputs = None):
 
@@ -82,6 +85,6 @@ def str_input(message, inputs = None):
         elif inp in inputs:
             user_str = inp
         else:
-            print('Invalid input, should be one of:')
+            print(colored('Invalid input, should be one of:', 'red'))
             print(inputs)
     return user_str

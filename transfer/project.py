@@ -3,6 +3,8 @@ from subprocess import call
 
 import yaml
 import numpy as np
+from colorama import init
+from termcolor import colored
 
 from transfer.input import int_input, float_input, bool_input, str_input
 
@@ -25,7 +27,7 @@ def configure():
         if project_name == project['name']:
             existing_project = project_name
     if existing_project is not None:
-        print('Project', project_name, 'already exists')
+        print(colored('Project ' + project_name + ' already exists', 'red'))
         overwrite = str_input('Would you like to overwrite this project? (yes or no) ', ['yes', 'no'])
         if overwrite == 'no':
             return
@@ -90,18 +92,18 @@ def configure():
     config.append(project)
     store_config(config)
     print('')
-    print('Project configure saved!')
+    print(colored('Project configure saved!', 'cyan'))
     print('')
     print('To run project:')
     print('')
-    print('    transfer --run --project ' + project_name)
+    print(colored('    transfer --run --project ' + project_name, 'green'))
     print('or')
-    print('    transfer -r -p ' + project_name)
+    print(colored('    transfer -r -p ' + project_name, 'green'))
 
 
 def select_augmentations():
-    print("Select augmentations:")
-    print("Note: defaults are all zero or false.")
+    print('Select augmentations:')
+    print(colored('Note: defaults are all zero or false.', 'cyan'))
     rounds = int_input('number of augmentation rounds', 1, 100)
     featurewise_center = bool_input('featurewise_center: set input mean to 0 over the dataset.')
     featurewise_std_normalization = bool_input('featurewise_std_normalization: divide inputs by std of the dataset.')
@@ -179,10 +181,10 @@ def select_project(user_provided_project):
         print('Transfer is not configured.')
         print('Please run:')
         print('')
-        print('transfer --configure')
+        print(colored('    transfer --configure', 'green'))
         return
 
-    print('Project selected: ', project['name'])
+    print(colored('Project selected: ' + project['name'], 'cyan'))
     return project
 
 def store_config(config):
@@ -222,11 +224,11 @@ def update_config(updated_project):
             store_config(projects)
         else:
             print('Not saving configuration')
-            print('Project: ', updated_project['name'], 'was not found in configured projects!')
+            print(colored('Project: ' + updated_project['name'] + ' was not found in configured projects!', 'red'))
 
     else:
         print('Transfer is not configured.')
         print('Please run:')
         print('')
-        print('transfer --configure')
+        print(colored('    transfer --configure', 'cyan'))
         return

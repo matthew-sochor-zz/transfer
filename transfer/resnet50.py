@@ -43,7 +43,7 @@ def get_pre_model(img_dim):
     return popped, pre_model
 
 
-def get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = None, extra_conv = False):
+def get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = None, extra_conv = False, end_copy = False):
 
     popped, pre_model = get_pre_model(img_dim)
 
@@ -94,29 +94,51 @@ def get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = Non
         print('Loading model weights:', model_weights)
         post_model.load_weights(model_weights)
 
-    return pre_model, post_model
+    if end_copy:
+        x_in_2_copy = Input(shape = input_dims)
+
+        if extra_conv:
+            x = Conv2D(512, (1, 1), name = 'conv_heatmap')(x_in_2_copy)
+            x = BatchNormalization()(x)
+            x = Activation('relu')(x)
+
+            x = AveragePooling2D((7, 7), name = 'avg_pool')(x)
+        else:
+            x = AveragePooling2D((7, 7), name = 'avg_pool')(x_in_2_copy)
+
+        x = GlobalAveragePooling2D()(x)
+
+        x = BatchNormalization()(x)
+        x = Dropout(0.2)(x)
+        x = Dense(number_categories, activation = 'softmax')(x)
+
+        end_model_copy = Model(x_in_2_copy, x)
+        for i in range(len(post_model.layers[2].layers)):
+            end_model_copy.layers[i].set_weights(end_model.layers[i].get_weights())
+        return pre_model, post_model, end_model_copy
+    else:
+        return pre_model, post_model
 
 
 def get_final_model(img_dim, conv_dim, number_categories, weights, extra_conv = False):
 
-    pre_model, post_model = get_pre_post_model(img_dim, conv_dim, number_categories, weights)
+    pre_model, post_model = get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = weights, extra_conv = extra_conv)
     x_in = Input(shape = (img_dim, img_dim, 3))
     x = pre_model(x_in)
     x = post_model(x)
     final_model = Model(x_in, x)
     return final_model
 
-def get_final_model_extra(img_dim, conv_dim, number_categories, weights):
-    final_model = get_final_model(img_dim, conv_dim, number_categories, weights)
-    final_model_extra = get_final_model(img_dim, conv_dim, number_categories, None, True)
 
-    for i, layer in enumerate(final_model.layers):
-        for ii, inner_layer in enumerate(layer):
-            for j,layer_extra in enumerate(final_model_extra.layers):
-                for jj, inner_layer_extra in enumerate(layer_extra):
-                    if inner_layer.name == inner_layer_extra.name:
-                        final_model_extra.layers[j].layers[jj].set_weights(final_model.layers[i].layers[ii].get_weights())
-    return final_model_extra
+def get_final_model_separated(img_dim, conv_dim, number_categories, weights, extra_conv = True):
+    pre_model, post_model, end_model = get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = weights, extra_conv = extra_conv, end_copy = True)
+
+    x_in = Input(shape = (img_dim, img_dim, 3))
+    x = pre_model(x_in)
+    x = post_model.layers[1](x)
+    pre_mid_model = Model(x_in, x)
+
+    return pre_mid_model, end_model
 
 
 def get_pre_post_model_extra(img_dim, conv_dim, number_categories, model_weights = None):

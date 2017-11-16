@@ -109,7 +109,7 @@ def main(args = None):
         update_config(project)
 
         print('')
-        print(colored('Completed modeling round: ' + project['model_round'], 'cyan'))
+        print(colored('Completed modeling round: ' + str(project['model_round']), 'cyan'))
         print('')
         print('Best current model: ', colored(project['resnet_best_weights'], 'yellow'))
         print('Last current model: ', colored(project['resnet_last_weights'], 'yellow'))

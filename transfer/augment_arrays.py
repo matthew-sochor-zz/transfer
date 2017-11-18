@@ -61,12 +61,11 @@ def augment_arrays(project):
 
     else:
         print('Generating image augmentations')
-        categories = sorted(os.listdir(project['img_path']))
 
         for img_idx, (array, label) in tqdm(enumerate(gen_arrays_from_dir(array_path))):
             for aug_idx, (array_aug, label_aug) in enumerate(gen_augment_arrays(array, label, project['augmentations'])):
                 cat_idx = np.argmax(label_aug)
-                cat = categories[cat_idx]
+                cat = project['categories'][cat_idx]
                 img_name = '{}-{:02d}-img-{}-{}'.format(img_idx, aug_idx,
                                                             cat, cat_idx)
                 label_name = '{}-{:02d}-label-{}-{}'.format(img_idx, aug_idx,

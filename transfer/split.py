@@ -22,14 +22,15 @@ def split_all(project):
     source_path = project['img_path']
     dest_path = project['path']
 
-    img_classes = [d for d in os.listdir(source_path) if os.path.isdir(os.path.join(source_path,d))]
-    test_path = make_paths(dest_path, 'test', img_classes)
-    train_path = make_paths(dest_path, 'train', img_classes)
+    categories = [d for d in os.listdir(source_path) if os.path.isdir(os.path.join(source_path,d))]
+    test_path = make_paths(dest_path, 'test', categories)
+    train_path = make_paths(dest_path, 'train', categories)
 
-    for img_class in img_classes:
+    for img_class in categories:
         split_group(source_path, img_class, test_path, train_path, project['test_percent'], project['seed'])
 
     project['is_split'] = True
+    project['categories'] = categories
     return project
 
 
@@ -68,14 +69,14 @@ def split_group(source_path, group_name, test_path, train_path, test_percent, se
         call(['cp', os.path.join(source_path, group_name, images), os.path.join(train_path, group_name, images)])
 
 
-def make_paths(source_path, val_group, img_classes):
+def make_paths(source_path, val_group, categories):
     '''
     Create split directory alongside source path and all validation and class subdirectories
 
     args:
         source_path (str): system path where all images are located
         val_group (str): test or train
-        img_classes (list[str]): image classes
+        categories (list[str]): image classes
 
     returns:
         val_path (str): system path where all split images are located
@@ -84,7 +85,7 @@ def make_paths(source_path, val_group, img_classes):
     val_path = os.path.join(source_path, 'split', val_group)
     call(['rm', '-rf', val_path])
     call(['mkdir', '-p', val_path])
-    for img_class in img_classes:
+    for img_class in categories:
         call(['mkdir', '-p', os.path.join(val_path, img_class)])
 
     return val_path

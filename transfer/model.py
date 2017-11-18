@@ -43,13 +43,12 @@ def train_model(project, extra_conv = False):
     else:
         label = 'resnet'
         weight_label = '-' + label + '-weights-'
-    weights_name = project['name'] + weight_label + str(project['model_round']) +'.hdf5'
-    source_path = project['path']
 
     if extra_conv == False:
         project['model_round'] += 1
 
-    img_classes = [d for d in os.listdir(project['img_path']) if os.path.isdir(os.path.join(project['img_path'], d))]
+    weights_name = project['name'] + weight_label + str(project['model_round']) +'.hdf5'
+    source_path = project['path']
 
     weights_path = os.path.join(source_path, 'weights')
     pre_model_path_test = os.path.join(source_path, 'pre_model', 'test')
@@ -72,7 +71,7 @@ def train_model(project, extra_conv = False):
 
     pre_model, model = pre_post_function(img_dim,
                                          conv_dim,
-                                         len(img_classes),
+                                         len(project['categories']),
                                          model_weights = project['resnet_best_weights'])
 
     optimizer = Adam(lr = project[label + '_learning_rate'])
@@ -117,7 +116,7 @@ def train_model(project, extra_conv = False):
     else:
         best_weights = os.path.join(weights_path, weights_names[max_i])
 
-    project['number_categories'] = len(img_classes)
+    project['number_categories'] = len(project['categories'])
     project[label + '_learning_rate'] = project[label + '_learning_rate'] / project[label + '_learning_rate_modifier']
     project[label + '_best_weights'] = best_weights
     project[label + '_last_weights'] = os.path.join(weights_path, weights_name)

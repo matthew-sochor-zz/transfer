@@ -90,21 +90,19 @@ def predict_model(project, weights, user_files, model = None, extra_conv = False
     if model is None:
         model = get_final_model(img_dim, conv_dim, project['number_categories'], project[weights], extra_conv = extra_conv)
 
-    img_classes = [d for d in os.listdir(project['img_path']) if os.path.isdir(os.path.join(project['img_path'],d))]
-
     output = []
     user_files = os.path.expanduser(user_files)
     if os.path.isdir(user_files):
         for img, file_name in tqdm(gen_from_directory(user_files, img_dim)):
             predicted = model.predict(img)
             pred_list = list(predicted[0])
-            output.append([file_name, img_classes[np.argmax(predicted)]] + pred_list)
+            output.append([project[weights], file_name, project['categories'][np.argmax(predicted)]] + pred_list)
 
     elif ((user_files.find('.jpg') > 0) or (user_files.find('.jpeg') > 0) or (user_files.find('.png') > 0)):
         img = prep_from_image(user_files, img_dim)
         predicted = model.predict(img)
         pred_list = list(predicted[0])
-        output.append([user_files, img_classes[np.argmax(predicted)]] + pred_list)
+        output.append([project[weights], user_files, project['categories'][np.argmax(predicted)]] + pred_list)
 
     else:
         print(colored('Should either be a directory or a .jpg, .jpeg, and .png', 'red'))
@@ -112,7 +110,7 @@ def predict_model(project, weights, user_files, model = None, extra_conv = False
 
 
     if len(output) > 0:
-        columns = ['file_name', 'predicted'] + img_classes
+        columns = ['weights_used','file_name', 'predicted'] + project['categories']
         pred_df = pd.DataFrame(output, columns = columns)
 
         predictions_file = os.path.join(project['path'], project['name'] + '_' + weights + '_predictions.csv')
@@ -127,15 +125,15 @@ def predict_model(project, weights, user_files, model = None, extra_conv = False
         print(colored('No image files found.', 'red'))
 
 
-def predict_heatmap(pre_mid_model, end_model, file_name, img, img_classes, heatmap_path, low_val = 0.5):
+def predict_heatmap(pre_mid_model, end_model, file_name, img, categories, heatmap_path, low_val = 0.5):
     pre_mid_predicted = pre_mid_model.predict(img)
     predicted = end_model.predict(pre_mid_predicted)
     pred_list = list(predicted[0])
     predicted_class_index = np.argmax(predicted)
-    cam, heatmap = grad_cam(end_model, img, pre_mid_predicted, predicted_class_index, 'conv_heatmap', len(img_classes))
+    cam, heatmap = grad_cam(end_model, img, pre_mid_predicted, predicted_class_index, 'conv_heatmap', len(categories))
     file_name_pre = os.path.split(file_name)[1].split('.')[0]
-    heatmap_file_name = os.path.join(heatmap_path, img_classes[predicted_class_index] + '_' + file_name_pre + '.png')
-    heatmap_overlay_file_name = os.path.join(heatmap_path, img_classes[predicted_class_index] + '_overlay_' + file_name_pre + '.png')
+    heatmap_file_name = os.path.join(heatmap_path, categories[predicted_class_index] + '_' + file_name_pre + '.png')
+    heatmap_overlay_file_name = os.path.join(heatmap_path, categories[predicted_class_index] + '_overlay_' + file_name_pre + '.png')
 
     heatmap_orig = heatmap.copy()
     heatmap[heatmap < (np.mean(heatmap))] = low_val
@@ -168,7 +166,7 @@ def predict_heatmap(pre_mid_model, end_model, file_name, img, img_classes, heatm
     #mimg = nimg.astype(np.uint8)
     cv2.imwrite(heatmap_file_name, mimg)
     cv2.imwrite(heatmap_overlay_file_name, cam)
-    return [file_name, img_classes[predicted_class_index]] + pred_list
+    return [file_name, categories[predicted_class_index]] + pred_list
 
 
 def predict_activation_model(project, weights, user_files, model = None):
@@ -182,21 +180,19 @@ def predict_activation_model(project, weights, user_files, model = None):
                                                             project[weights],
                                                             extra_conv = True)
 
-    img_classes = [d for d in os.listdir(project['img_path']) if os.path.isdir(os.path.join(project['img_path'],d))]
-
     heatmap_path = os.path.join(project['path'], 'heatmaps')
     call(['mkdir', '-p', heatmap_path])
     output = []
     user_files = os.path.expanduser(user_files)
     if os.path.isdir(user_files):
         for img, file_name in tqdm(gen_from_directory(user_files, img_dim)):
-            out = predict_heatmap(pre_mid_model, end_model, file_name, img, img_classes, heatmap_path)
-            output.append(out)
+            out = predict_heatmap(pre_mid_model, end_model, file_name, img, project['categories'], heatmap_path)
+            output.append([project[weights]] + out)
 
     elif ((user_files.find('.jpg') > 0) or (user_files.find('.jpeg') > 0) or (user_files.find('.png') > 0)):
         img = prep_from_image(user_files, img_dim)
-        out = predict_heatmap(pre_mid_model, end_model, user_files, img, img_classes, heatmap_path)
-        output.append(out)
+        out = predict_heatmap(pre_mid_model, end_model, user_files, img, project['categories'], heatmap_path)
+        output.append([project[weights]] + out)
 
     else:
         print(colored('Should either be a directory or a .jpg, .jpeg, and .png', 'red'))
@@ -204,7 +200,7 @@ def predict_activation_model(project, weights, user_files, model = None):
 
 
     if len(output) > 0:
-        columns = ['file_name', 'predicted'] + img_classes
+        columns = ['weights_used', 'file_name', 'predicted'] + project['categories']
         pred_df = pd.DataFrame(output, columns = columns)
 
         predictions_file = os.path.join(project['path'], project['name'] + '_' + weights + '_predictions.csv')

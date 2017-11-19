@@ -6,13 +6,17 @@ import yaml
 import keras
 from colorama import init
 from termcolor import colored
+from keras import backend as K
 
 from transfer.split import split_all
-from transfer.project import configure, select_project, update_config
+from transfer.project import configure, configure_server, select_project, update_config, import_config, export_config
 from transfer import images_to_array, pre_model
 from transfer.model import train_model
 from transfer.predict_model import predict_model, predict_activation_model
 from transfer.augment_arrays import augment_arrays
+from transfer.input import model_input, str_input
+from transfer.server import start_server
+
 
 def main(args = None):
     '''
@@ -27,6 +31,18 @@ def main(args = None):
                         action = 'store_true',
                         help = 'Configure transfer')
 
+    parser.add_argument('-e','--export',
+                        action = 'store_true',
+                        dest = 'export_config',
+                        help = 'Export configuration and models')
+
+    parser.add_argument('-i','--import',
+                        action = 'store',
+                        type = str,
+                        default = None,
+                        dest = 'import_config',
+                        help = 'Import configuration and models')
+
     parser.add_argument('-p','--project',
                         action = 'store',
                         type = str,
@@ -38,48 +54,36 @@ def main(args = None):
                         action = 'store_true',
                         help = 'Run all transfer learning operations')
 
-    parser.add_argument('--best-predict',
+    parser.add_argument('--predict',
                         action = 'store',
                         type = str,
                         default = None,
                         const = 'default',
-                        dest = 'best_predict',
+                        dest = 'predict',
                         nargs='?',
-                        help = 'Predict best model on directory')
+                        help = 'Predict model on file or directory')
 
-    parser.add_argument('--last-predict',
-                        action = 'store',
-                        type = str,
-                        default = None,
-                        const = 'default',
-                        dest = 'last_predict',
-                        nargs='?',
-                        help = 'Predict last model on directory')
+    parser.add_argument('--prediction-rest-api',
+                        action = 'store_true',
+                        dest = 'rest_api',
+                        help = 'Start rest api to make predictions on files or directories')
 
-    parser.add_argument('--best-predict-activation',
-                        action = 'store',
-                        type = str,
-                        default = None,
-                        const = 'default',
-                        dest = 'best_predict_activation',
-                        nargs='?',
-                        help = 'Predict best activation model on directory')
-
-    parser.add_argument('--last-predict-activation',
-                        action = 'store',
-                        type = str,
-                        default = None,
-                        const = 'default',
-                        dest = 'last_predict_activation',
-                        nargs='?',
-                        help = 'Predict last activation model on directory')
     if len(sys.argv) == 1:
         parser.print_help()
         return
 
     args = parser.parse_args()
 
-    if args.configure:
+    if args.import_config is not None:
+        project = select_project(args.project)
+        import_config(args.import_config)
+        return
+    elif args.export_config:
+        project = select_project(args.project)
+        weights, extra_conv = model_input(project)
+        export_config(project, weights, extra_conv)
+        return
+    elif args.configure:
         configure()
         return
     else:
@@ -113,61 +117,49 @@ def main(args = None):
         print('')
         print('Best current model: ', colored(project['resnet_best_weights'], 'yellow'))
         print('Last current model: ', colored(project['resnet_last_weights'], 'yellow'))
+        print('Best current model w/ extra conv: ', colored(project['extra_best_weights'], 'yellow'))
+        print('Last current model w/ extra conv: ', colored(project['extra_last_weights'], 'yellow'))
         print('')
         print('To further refine the model, run again with:')
         print('')
-        print(colored('    transfer --run', 'green'))
+        print(colored('    transfer --run --project ' + project['name'], 'green'))
+        print('')
+        print('To make predictions:')
+        print('')
+        print(colored('    transfer --predict [optional dir or file] --project ' + project['name'], 'yellow'))
         print('')
 
-    elif args.best_predict is not None:
-        if project['resnet_best_weights'] is not None:
-            if args.best_predict == 'default':
-                args.best_predict = project['img_path']
-            print('Predicting from current best model: ', colored(project['resnet_best_weights'], 'yellow'))
-            print('Predicting on image(s) in: ', colored(args.best_predict, 'yellow'))
-            predict_model(project, 'resnet_best_weights', args.best_predict)
+    elif args.rest_api:
+        if project['server_weights'] is not None:
+            start_server(project, 'server_weights', extra_conv = project['extra_conv'])
+
+        elif project['resnet_best_weights'] is not None:
+            weights, extra_conv = model_input(project)
+            start_server(project, weights, extra_conv = extra_conv)
+
         else:
             print('Model is not trained.  Please first run your project:')
             print('')
             print(colored('    transfer --run', 'green'))
             print('')
+    elif args.predict is not None:
+        K.set_learning_phase(0)
+        if args.predict == 'default':
+            args.predict = str_input('Enter a path to file(s): ')
+        if project['server_weights'] is not None:
+            if project['extra_conv']:
+                predict_activation_model(project, 'server_weights', args.predict)
+            else:
+                predict_model(project, 'server_weights', args.predict)
 
-    elif args.last_predict is not None:
-        if project['resnet_last_weights'] is not None:
-            if args.last_predict == 'default':
-                args.last_predict = project['img_path']
-            print('Predicting from current last model: ', colored(project['resnet_last_weights'], 'yellow'))
-            print('Predicting on image(s) in: ', colored(args.last_predict, 'yellow'))
-            predict_model(project, 'resnet_last_weights', args.last_predict)
-        else:
-            print('Model is not trained.  Please first run your project:')
-            print('')
-            print(colored('    transfer --run', 'green'))
-            print('')
+        elif project['resnet_best_weights'] is not None:
+            weights, extra_conv = model_input(project)
+            print('Predicting on image(s) in: ', colored(args.predict, 'yellow'))
+            if extra_conv:
+                predict_activation_model(project, weights, args.predict)
+            else:
+                predict_model(project, weights, args.predict)
 
-
-    elif args.best_predict_activation is not None:
-        keras.backend.set_learning_phase(0)
-        if project['extra_best_weights'] is not None:
-            if args.best_predict_activation == 'default':
-                args.best_predict_activation = project['img_path']
-            print('Predicting activation from current best model: ', colored(project['extra_best_weights'], 'yellow'))
-            print('Predicting on image(s) in: ', colored(args.best_predict_activation, 'yellow'))
-            predict_activation_model(project, 'extra_best_weights', args.best_predict_activation)
-        else:
-            print('Model is not trained.  Please first run your project:')
-            print('')
-            print(colored('    transfer --run', 'green'))
-            print('')
-
-    elif args.last_predict_activation is not None:
-        keras.backend.set_learning_phase(0)
-        if project['extra_last_weights'] is not None:
-            if args.last_predict_activation == 'default':
-                args.last_predict_activation = project['img_path']
-            print('Predicting activation from current last model: ', colored(project['extra_last_weights'], 'yellow'))
-            print('Predicting on image(s) in: ', colored(args.last_predict_activation, 'yellow'))
-            predict_activation_model(project, 'extra_last_weights', args.last_predict_activation)
         else:
             print('Model is not trained.  Please first run your project:')
             print('')

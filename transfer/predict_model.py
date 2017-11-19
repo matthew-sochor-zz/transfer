@@ -2,8 +2,9 @@ import os
 from subprocess import call
 
 import numpy as np
+from keras.layers import Input
 from keras.layers.core import Lambda
-from keras.models import Sequential
+from keras.models import Model
 from keras.preprocessing.image import load_img
 from keras.applications.resnet50 import preprocess_input
 import matplotlib.pyplot as plt
@@ -33,17 +34,21 @@ def normalize(x):
     return x / (K.sqrt(K.mean(K.square(x))) + 1e-5)
 
 
-def grad_cam(input_model, image, mid_image, category_index, layer_name, nb_classes):
-    model = Sequential()
-    model.add(input_model)
+def grad_cam(input_model, x_in, x, image, mid_image, category_index, layer_name, nb_classes):
 
     target_layer = lambda x: target_category_loss(x, category_index, nb_classes)
-    model.add(Lambda(target_layer, output_shape = target_category_loss_output_shape))
+    x = Lambda(target_layer, output_shape = target_category_loss_output_shape)(x)
+    model = Model(x_in, x)
 
-    conv_output = model.layers[0].layers[1].output
+    for i in range(len(input_model.layers)):
+        model.layers[i].set_weights(input_model.layers[i].get_weights())
+
+    conv_output = model.layers[1].output
     loss = K.sum(model.layers[-1].output)
-    grads = normalize(K.gradients(loss, conv_output)[0])
-    gradient_function = K.function([model.layers[0].input], [conv_output, grads])
+    grad = K.gradients(loss, conv_output)
+
+    grads = normalize(grad[0])
+    gradient_function = K.function([model.input], [conv_output, grads])
 
     output, grads_val = gradient_function([mid_image])
     output, grads_val = output[0, :], grads_val[0, :, :, :]
@@ -83,12 +88,11 @@ def gen_from_directory(directory, img_dim):
             yield prep_from_image(os.path.join(directory, file_name), img_dim), os.path.join(directory, file_name)
 
 
-def predict_model(project, weights, user_files, model = None, extra_conv = False):
+def predict_model(project, weights, user_files, extra_conv = False):
 
     img_dim = 224 * project['img_size']
     conv_dim = 7 * project['img_size']
-    if model is None:
-        model = get_final_model(img_dim, conv_dim, project['number_categories'], project[weights], extra_conv = extra_conv)
+    model = get_final_model(img_dim, conv_dim, project['number_categories'], project[weights], extra_conv = extra_conv)
 
     output = []
     user_files = os.path.expanduser(user_files)
@@ -125,12 +129,12 @@ def predict_model(project, weights, user_files, model = None, extra_conv = False
         print(colored('No image files found.', 'red'))
 
 
-def predict_heatmap(pre_mid_model, end_model, file_name, img, categories, heatmap_path, low_val = 0.5):
+def predict_heatmap(pre_mid_model, end_model, file_name, x_in, x, img, categories, heatmap_path, low_val = 0.5):
     pre_mid_predicted = pre_mid_model.predict(img)
     predicted = end_model.predict(pre_mid_predicted)
     pred_list = list(predicted[0])
     predicted_class_index = np.argmax(predicted)
-    cam, heatmap = grad_cam(end_model, img, pre_mid_predicted, predicted_class_index, 'conv_heatmap', len(categories))
+    cam, heatmap = grad_cam(end_model, x_in, x, img, pre_mid_predicted, predicted_class_index, 'conv_heatmap', len(categories))
     file_name_pre = os.path.split(file_name)[1].split('.')[0]
     heatmap_file_name = os.path.join(heatmap_path, categories[predicted_class_index] + '_' + file_name_pre + '.png')
     heatmap_overlay_file_name = os.path.join(heatmap_path, categories[predicted_class_index] + '_overlay_' + file_name_pre + '.png')
@@ -169,16 +173,15 @@ def predict_heatmap(pre_mid_model, end_model, file_name, img, categories, heatma
     return [file_name, categories[predicted_class_index]] + pred_list
 
 
-def predict_activation_model(project, weights, user_files, model = None):
+def predict_activation_model(project, weights, user_files):
 
     img_dim = 224 * project['img_size']
     conv_dim = 7 * project['img_size']
-    if model is None:
-        pre_mid_model, end_model = get_final_model_separated(img_dim,
-                                                            conv_dim,
-                                                            project['number_categories'],
-                                                            project[weights],
-                                                            extra_conv = True)
+    pre_mid_model, end_model, x_in, x = get_final_model_separated(img_dim,
+                                                                conv_dim,
+                                                                project['number_categories'],
+                                                                project[weights],
+                                                                extra_conv = True)
 
     heatmap_path = os.path.join(project['path'], 'heatmaps')
     call(['mkdir', '-p', heatmap_path])
@@ -186,12 +189,12 @@ def predict_activation_model(project, weights, user_files, model = None):
     user_files = os.path.expanduser(user_files)
     if os.path.isdir(user_files):
         for img, file_name in tqdm(gen_from_directory(user_files, img_dim)):
-            out = predict_heatmap(pre_mid_model, end_model, file_name, img, project['categories'], heatmap_path)
+            out = predict_heatmap(pre_mid_model, end_model, file_name, x_in, x, img, project['categories'], heatmap_path)
             output.append([project[weights]] + out)
 
     elif ((user_files.find('.jpg') > 0) or (user_files.find('.jpeg') > 0) or (user_files.find('.png') > 0)):
         img = prep_from_image(user_files, img_dim)
-        out = predict_heatmap(pre_mid_model, end_model, user_files, img, project['categories'], heatmap_path)
+        out = predict_heatmap(pre_mid_model, end_model, user_files, x_in, x, img, project['categories'], heatmap_path)
         output.append([project[weights]] + out)
 
     else:

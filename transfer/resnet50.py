@@ -114,8 +114,8 @@ def get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = Non
 
         end_model_copy = Model(x_in_2_copy, x)
         for i in range(len(post_model.layers[2].layers)):
-            end_model_copy.layers[i].set_weights(end_model.layers[i].get_weights())
-        return pre_model, post_model, end_model_copy
+            end_model_copy.layers[i].set_weights(post_model.layers[2].layers[i].get_weights())
+        return pre_model, post_model, end_model_copy, x_in_2_copy, x
     else:
         return pre_model, post_model
 
@@ -131,14 +131,14 @@ def get_final_model(img_dim, conv_dim, number_categories, weights, extra_conv = 
 
 
 def get_final_model_separated(img_dim, conv_dim, number_categories, weights, extra_conv = True):
-    pre_model, post_model, end_model = get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = weights, extra_conv = extra_conv, end_copy = True)
+    pre_model, post_model, end_model, x_in_0, x_0 = get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = weights, extra_conv = extra_conv, end_copy = True)
 
     x_in = Input(shape = (img_dim, img_dim, 3))
     x = pre_model(x_in)
     x = post_model.layers[1](x)
     pre_mid_model = Model(x_in, x)
 
-    return pre_mid_model, end_model
+    return pre_mid_model, end_model, x_in_0, x_0
 
 
 def get_pre_post_model_extra(img_dim, conv_dim, number_categories, model_weights = None):

@@ -2,13 +2,24 @@ from setuptools import setup, find_packages
 
 setup(
     name="transfer",
-    version="0.6",
+    version="0.7",
     description="Transfer learning for deep image classification",
     packages=find_packages(),
 
     # Project uses reStructuredText, so ensure that the docutils get
     # installed or upgraded on the target machine
-    install_requires=['numpy', 'keras', 'tensorflow', 'pyyaml', 'tqdm', 'pandas', 'opencv-python', 'termcolor', 'colorama'],
+    install_requires=['numpy',
+                      'keras',
+                      'tensorflow',
+                      'pyyaml',
+                      'tqdm',
+                      'pandas',
+                      'opencv-python',
+                      'termcolor',
+                      'colorama',
+                      'flask',
+                      'flask_jsonpify',
+                      'flask_restful'],
     python_requires='>=3',
 
     # metadata for upload to PyPI

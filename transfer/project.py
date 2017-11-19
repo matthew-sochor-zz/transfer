@@ -43,7 +43,7 @@ def configure():
         else:
             path_unset = False
 
-    image_path = image_path.replace('~', home)
+    api_port = int_input('port for local prediction API (suggested: 5000)', 1024, 49151)
     test_percent = int_input('percentage of trips to assign to test (suggested: 20)', 1, 50)
     batch_size = int_input('batch size (suggested: 8)', 1, 64)
     learning_rate = float_input('learning rate (suggested: 0.001)', 0, 1)
@@ -69,6 +69,7 @@ def configure():
     project = {'name': project_name,
                'img_path': image_path,
                'path': project_path,
+               'api_port': api_port,
                'test_percent': test_percent,
                'batch_size': batch_size,
                'resnet_learning_rate': learning_rate,
@@ -83,6 +84,7 @@ def configure():
                'is_augmented': False,
                'is_pre_model': False,
                'model_round': 0,
+               'server_weights': None,
                'resnet_last_weights': None,
                'extra_last_weights': None,
                'resnet_best_weights': None,
@@ -99,6 +101,74 @@ def configure():
     print(colored('    transfer --run --project ' + project_name, 'green'))
     print('or')
     print(colored('    transfer -r -p ' + project_name, 'green'))
+
+
+def configure_server():
+    '''
+    Configure the transfer environment and store
+    '''
+
+    home = os.path.expanduser('~')
+    if os.path.isfile(os.path.join(home, '.transfer', 'config.yaml')):
+        with open(os.path.join(home, '.transfer', 'config.yaml'), 'r') as fp:
+            config = yaml.load(fp.read())
+    else:
+        config = []
+
+    project_name = input('Name your project: ')
+    existing_project = None
+    for project in config:
+        if project_name == project['name']:
+            existing_project = project_name
+    if existing_project is not None:
+        print(colored('Project ' + project_name + ' already exists', 'red'))
+        overwrite = str_input('Would you like to overwrite this project? (yes or no) ', ['yes', 'no'])
+        if overwrite == 'no':
+            return
+        else:
+            config = [project for project in config if project_name != project['name']]
+
+    api_port = int_input('port for local prediction API (suggested: 5000)', 1024, 49151)
+    print('Select image resolution:')
+    print('[0] low (224 px)')
+    print('[1] mid (448 px)')
+    print('[2] high (896 px)')
+    img_resolution_index = int_input('choice', 0, 2, show_range = False)
+    if img_resolution_index == 0:
+        img_size = 1
+    elif img_resolution_index == 1:
+        img_size = 2
+    else:
+        img_size = 4
+    num_categories = int_input('number of image categories in your model', 0, 10000000)
+
+    weights = False
+    while weights == False:
+        server_weights = os.path.expanduser(input('Select weights file: '))
+        if os.path.isfile(server_weights):
+            weights = True
+        else:
+            print('Cannot find the weight file: ', server_weights)
+
+    extra_conv = bool_input('Do the weights have the extra convolutional layer? ')
+
+    project = {'name': project_name,
+               'api_port': api_port,
+               'img_size': img_size,
+               'extra_conv': extra_conv,
+               'number_categories': num_categories,
+               'server_weights': server_weights}
+
+    config.append(project)
+    store_config(config)
+    print('')
+    print(colored('Project configure saved!', 'cyan'))
+    print('')
+    print('To start the server:')
+    print('')
+    print(colored('    transfer --prediction-rest-api --project ' + project_name, 'green'))
+    print('or')
+    print(colored('    transfer --prediction-rest-api -p ' + project_name, 'green'))
 
 
 def select_augmentations():
@@ -187,7 +257,35 @@ def select_project(user_provided_project):
     print(colored('Project selected: ' + project['name'], 'cyan'))
     return project
 
-def store_config(config):
+
+def import_config(config_file):
+    config_file = os.path.expanduser(config_file)
+    if os.path.isfile(config_file) == False:
+        print('This is not a file:', colored(config_file, 'red'))
+    else:
+        print('dunno')
+
+    print(config_file)
+
+
+def export_config(config, weights, extra_conv):
+    export_path = os.path.expanduser(os.path.join('~/.transfer/export', config['name']))
+    call(['mkdir','-p', export_path])
+
+    server_weights = os.path.join(export_path, 'server_model.hdf5')
+    call(['cp', config[weights], server_weights])
+
+    project = {'name': config['name'],
+               'api_port': config['api_port'],
+               'img_size': config['img_size'],
+               'extra_conv': extra_conv,
+               'number_categories': config['number_categories'],
+               'categories': config['categories'],
+               'server_weights': server_weights}
+    store_config(project, suffix = os.path.join('export', config['name']))
+
+
+def store_config(config, suffix = None):
     '''
     Store configuration
 
@@ -195,9 +293,13 @@ def store_config(config):
         config (list[dict]): configurations for each project
     '''
     home = os.path.expanduser('~')
+    if suffix is not None:
+        config_path = os.path.join(home, '.transfer', suffix)
+    else:
+        config_path = os.path.join(home, '.transfer')
 
-    call(['mkdir', '-p', os.path.join(home, '.transfer')])
-    with open(os.path.join(home, '.transfer', 'config.yaml'), 'w') as fp:
+    call(['mkdir', '-p', config_path])
+    with open(os.path.join(config_path, 'config.yaml'), 'w') as fp:
         yaml.dump(config, fp)
 
 

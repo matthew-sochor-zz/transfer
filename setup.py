@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="transfer",
-    version="0.7",
+    version="0.8",
     description="Transfer learning for deep image classification",
     packages=find_packages(),
 
@@ -10,7 +10,6 @@ setup(
     # installed or upgraded on the target machine
     install_requires=['numpy',
                       'keras',
-                      'tensorflow',
                       'pyyaml',
                       'tqdm',
                       'pandas',

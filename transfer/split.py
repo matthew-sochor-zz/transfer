@@ -62,11 +62,11 @@ def split_group(source_path, group_name, test_path, train_path, test_percent, se
 
     print('Splitting test set of: ', group_name)
     for images in tqdm(test):
-        call(['cp', os.path.join(source_path, group_name, images), os.path.join(test_path, group_name, images)])
+        call(['mv', os.path.join(source_path, group_name, images), os.path.join(test_path, group_name, images)])
 
     print('Splitting train set of: ', group_name)
     for images in tqdm(train):
-        call(['cp', os.path.join(source_path, group_name, images), os.path.join(train_path, group_name, images)])
+        call(['mv', os.path.join(source_path, group_name, images), os.path.join(train_path, group_name, images)])
 
 
 def make_paths(source_path, val_group, categories):

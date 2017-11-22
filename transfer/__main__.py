@@ -3,9 +3,20 @@ import argparse
 import os
 
 import yaml
-import keras
 from colorama import init
 from termcolor import colored
+try:
+    import tensorflow
+    import asdf
+except ModuleNotFoundError:
+    print(colored('Tensorflow not installed!', 'red'))
+    print('Note: there are too many system specific things with this module')
+    print('Please look up how to install it for your system:')
+    print('')
+    print(colored('https://www.tensorflow.org/install/', 'yellow'))
+    print('')
+    raise ModuleNotFoundError
+import keras
 from keras import backend as K
 
 from transfer.split import split_all
@@ -48,7 +59,7 @@ def main(args = None):
                         type = str,
                         default = None,
                         dest = 'project',
-                        help = 'Split files into test and train')
+                        help = 'Specify a project, if not supplied it will be picked from configured projects')
 
     parser.add_argument('-r','--run',
                         action = 'store_true',

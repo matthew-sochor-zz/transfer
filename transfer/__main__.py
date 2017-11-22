@@ -75,7 +75,6 @@ def main(args = None):
     args = parser.parse_args()
 
     if args.import_config is not None:
-        project = select_project(args.project)
         import_config(args.import_config)
         return
     elif args.export_config:

@@ -258,18 +258,72 @@ def select_project(user_provided_project):
     return project
 
 
+def read_imported_config(import_path, project_name, projects):
+
+    # Oh god this logic is a disaster, user interfaces are hard
+    unique_name = False
+    project_path = os.path.join(import_path, project_name)
+    while unique_name == False:
+        unique_name = True
+        for project in projects:
+            if project['name'] == project_name:
+                print(colored('Project with this name already exists.', 'red'))
+                project_name = str_input('Provide a new project name: ')
+                unique_name = False
+
+    project_dest = os.path.expanduser(str_input('Provide a path for your predictions to be saved: '))
+    if os.path.isdir(project_dest) == False:
+        print('Creating directory:', project_dest)
+        call(['mkdir', '-p', project_dest])
+    # You don't get to judge me t('-' t)
+    with open(os.path.join(project_path, 'config.yaml'), 'r') as fp:
+        import_project = yaml.load(fp.read())
+    import_project['name'] = project_name
+    import_project['server_weights'] = os.path.join(project_path, 'server_model.hdf5')
+    import_project['path'] = project_dest
+    return import_project
+
 def import_config(config_file):
     config_file = os.path.expanduser(config_file)
+    transfer_path = os.path.expanduser(os.path.join('~/.transfer'))
+    import_path = os.path.join(transfer_path, 'import')
+    call(['rm', '-rf', import_path])
+    call(['mkdir','-p', import_path])
+
     if os.path.isfile(config_file) == False:
         print('This is not a file:', colored(config_file, 'red'))
+        return
+
+    call(['tar', '-zxvf', config_file, '-C', import_path])
+    project_name = os.listdir(import_path)[0]
+    print('Imported project:', colored(project_name, 'magenta'))
+    if os.path.isfile(os.path.join(transfer_path, 'config.yaml')):
+        with open(os.path.join(transfer_path, 'config.yaml'), 'r') as fp:
+            projects = yaml.load(fp.read())
+
+        import_project = read_imported_config(import_path, project_name, projects)
+
+        projects.append(import_project)
+        store_config(projects)
+
+        print('Project successfully imported!')
+        print('Make predictions with:')
+        print('')
+        print(colored('transfer --predict [optional dir or file] --project ' + import_project['name'], 'yellow'))
+        print('')
+        print('Or start a prediction server with:')
+        print('')
+        print(colored('transfer --prediction-rest-api --project ' + import_project['name'], 'yellow'))
     else:
-        print('dunno')
+        call(['cp', os.path.join(import_path, project, 'config.yaml'), os.path])
+        print(os.listdir(import_path))
 
     print(config_file)
 
 
 def export_config(config, weights, extra_conv):
     export_path = os.path.expanduser(os.path.join('~/.transfer/export', config['name']))
+    export_tar = export_path + '.tar.gz'
     call(['mkdir','-p', export_path])
 
     server_weights = os.path.join(export_path, 'server_model.hdf5')
@@ -283,6 +337,10 @@ def export_config(config, weights, extra_conv):
                'categories': config['categories'],
                'server_weights': server_weights}
     store_config(project, suffix = os.path.join('export', config['name']))
+    call(['tar', '-zcvf', export_tar, '-C', os.path.expanduser('~/.transfer/export'), config['name']])
+    print('Project successfully exported, please save the following file for re-import to transfer')
+    print('')
+    print(colored(export_tar, 'green'))
 
 
 def store_config(config, suffix = None):

@@ -54,9 +54,11 @@ def train_model(project, swap, extra_conv = False):
     if swap:
         train = 'test'
         test = 'train'
+        weights = 'resnet_last_weights'
     else:
         train = 'train'
         test = 'test'
+        weights = 'resnet_best_weights'
 
     pre_model_path_test = os.path.join(source_path, 'pre_model', test)
     pre_model_path_train = os.path.join(source_path, 'pre_model', train)
@@ -79,7 +81,7 @@ def train_model(project, swap, extra_conv = False):
     pre_model, model = pre_post_function(img_dim,
                                          conv_dim,
                                          len(project['categories']),
-                                         model_weights = project['resnet_best_weights'])
+                                         model_weights = project[weights])
 
     optimizer = Adam(lr = project[label + '_learning_rate'])
     model.compile(optimizer = optimizer,

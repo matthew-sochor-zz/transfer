@@ -64,6 +64,10 @@ def main(args = None):
                         action = 'store_true',
                         help = 'Run all transfer learning operations')
 
+    parser.add_argument('--swap',
+                        action = 'store_true',
+                        help = 'Train model on test set and test on train set')
+
     parser.add_argument('--predict',
                         action = 'store',
                         type = str,
@@ -115,10 +119,10 @@ def main(args = None):
             project = pre_model(project)
             update_config(project)
 
-        project = train_model(project)
+        project = train_model(project, args.swap)
         update_config(project)
 
-        project = train_model(project, extra_conv = True)
+        project = train_model(project, args.swap, extra_conv = True)
         update_config(project)
 
         print('')

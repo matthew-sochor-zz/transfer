@@ -36,7 +36,7 @@ def gen_minibatches(array_dir, batch_size):
         yield np.array(arrays), np.array(labels)
 
 
-def train_model(project, extra_conv = False):
+def train_model(project, swap, extra_conv = False):
     if extra_conv:
         label = 'extra'
         weight_label = '-' + label + '-weights-'
@@ -51,8 +51,15 @@ def train_model(project, extra_conv = False):
     source_path = project['path']
 
     weights_path = os.path.join(source_path, 'weights')
-    pre_model_path_test = os.path.join(source_path, 'pre_model', 'test')
-    pre_model_path_train = os.path.join(source_path, 'pre_model', 'train')
+    if swap:
+        train = 'test'
+        test = 'train'
+    else:
+        train = 'train'
+        test = 'test'
+
+    pre_model_path_test = os.path.join(source_path, 'pre_model', test)
+    pre_model_path_train = os.path.join(source_path, 'pre_model', train)
     call(['mkdir', '-p', weights_path])
 
     number_train_samples = len(os.listdir(pre_model_path_train))

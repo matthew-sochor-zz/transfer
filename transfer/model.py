@@ -83,7 +83,14 @@ def train_model(project, swap, extra_conv = False):
                                          len(project['categories']),
                                          model_weights = project[weights])
 
-    optimizer = Adam(lr = project[label + '_learning_rate'])
+    if extra_conv:
+        lr = 0.001
+        epochs = 5
+    else:
+        lr = project[label + '_learning_rate']
+        epochs = project['epochs']
+
+    optimizer = Adam(lr = lr)
     model.compile(optimizer = optimizer,
                   loss = 'categorical_crossentropy',
                   metrics = ['categorical_accuracy'])
@@ -101,7 +108,7 @@ def train_model(project, swap, extra_conv = False):
 
     model.fit_generator(gen_train,
                         steps_per_epoch = steps_per_epoch,
-                        epochs = project['epochs'],
+                        epochs = epochs,
                         verbose = 2,
                         validation_data = gen_test,
                         validation_steps = validation_steps,

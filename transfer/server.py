@@ -28,7 +28,7 @@ def start_server(project, weights, extra_conv = False):
             img_path = os.path.expanduser(args['img_path'])
             if os.path.isfile(img_path):
                 if img_path.lower().find('.png') > 0 or img_path.lower().find('.jpg') > 0 or img_path.lower().find('.jpeg') > 0:
-                    img = prep_from_image(img_path, img_dim)
+                    img = prep_from_image(img_path, img_dim, project['augmentations'])
                     predicted = model.predict(img)
                     pred_list = [float(p) for p in predicted[0]]
                     result = {'weights': project[weights],
@@ -45,7 +45,7 @@ def start_server(project, weights, extra_conv = False):
                 for file_name in os.listdir(img_path):
                     if file_name.lower().find('.png') > 0 or file_name.lower().find('.jpg') > 0 or file_name.lower().find('.jpeg') > 0:
                         full_file_name = os.path.join(img_path, file_name)
-                        img = prep_from_image(full_file_name, img_dim)
+                        img = prep_from_image(full_file_name, img_dim, project['augmentations'])
                         predicted = model.predict(img)
                         pred_list = [float(p) for p in predicted[0]]
                         result.append({'weights': project[weights],

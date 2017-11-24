@@ -21,12 +21,6 @@ from termcolor import colored
 from transfer.resnet50 import get_final_model, get_final_model_separated
 
 
-def get_image_data_generator(augmentations):
-    return ImageDataGenerator(samplewise_center = augmentations['samplewise_center'],
-                              samplewise_std_normalization = augmentations['samplewise_std_normalization'],
-                              rescale = augmentations['rescale'])
-
-
 def target_category_loss(x, category_index, nb_classes):
     return tf.multiply(x, K.one_hot([category_index], nb_classes))
 
@@ -81,17 +75,26 @@ def grad_cam(input_model, x_in, x, image, mid_image, category_index, layer_name,
     return np.uint8(cam), heatmap
 
 
-def prep_from_image(file_name, img_dim, data_gen):
+def prep_from_image(file_name, img_dim, augmentations):
     img = np.array(load_img(file_name, target_size = (img_dim, img_dim, 3)))
+    mean = np.mean(img)
+    std = np.std(img)
+    if augmentations['samplewise_center']:
+        img -= mean
+    if augmentations['samplewise_std_normalization']:
+        img /= std
+    if augmentations['rescale'] is not None:
+        if augmentations['rescale'] > 0:
+            img *= augmentations['rescale']
     return preprocess_input(img[np.newaxis].astype(np.float32))
 
 
-def gen_from_directory(directory, img_dim):
+def gen_from_directory(directory, img_dim, project):
     file_names = [os.path.join(dp, f) for dp, dn, fn in os.walk(directory) for f in fn]
 
     for file_name in file_names:
         if ((file_name.find('.jpg') > 0) or (file_name.find('.jpeg') > 0) or (file_name.find('.png') > 0)):
-            yield prep_from_image(os.path.join(directory, file_name), img_dim), os.path.join(directory, file_name)
+            yield prep_from_image(os.path.join(directory, file_name), img_dim), os.path.join(directory, file_name, project['augmentations'])
 
 
 def predict_model(project, weights, user_files, extra_conv = False):
@@ -103,13 +106,13 @@ def predict_model(project, weights, user_files, extra_conv = False):
     output = []
     user_files = os.path.expanduser(user_files)
     if os.path.isdir(user_files):
-        for img, file_name in tqdm(gen_from_directory(user_files, img_dim)):
+        for img, file_name in tqdm(gen_from_directory(user_files, img_dim, project)):
             predicted = model.predict(img)
             pred_list = list(predicted[0])
             output.append([project[weights], file_name, project['categories'][np.argmax(predicted)]] + pred_list)
 
     elif ((user_files.find('.jpg') > 0) or (user_files.find('.jpeg') > 0) or (user_files.find('.png') > 0)):
-        img = prep_from_image(user_files, img_dim)
+        img = prep_from_image(user_files, img_dim, project['augmentations'])
         predicted = model.predict(img)
         pred_list = list(predicted[0])
         output.append([project[weights], user_files, project['categories'][np.argmax(predicted)]] + pred_list)
@@ -194,12 +197,12 @@ def predict_activation_model(project, weights, user_files):
     output = []
     user_files = os.path.expanduser(user_files)
     if os.path.isdir(user_files):
-        for img, file_name in tqdm(gen_from_directory(user_files, img_dim)):
+        for img, file_name in tqdm(gen_from_directory(user_files, img_dim, project)):
             out = predict_heatmap(pre_mid_model, end_model, file_name, x_in, x, img, project['categories'], heatmap_path)
             output.append([project[weights]] + out)
 
     elif ((user_files.find('.jpg') > 0) or (user_files.find('.jpeg') > 0) or (user_files.find('.png') > 0)):
-        img = prep_from_image(user_files, img_dim)
+        img = prep_from_image(user_files, img_dim, project['augmentations'])
         out = predict_heatmap(pre_mid_model, end_model, user_files, x_in, x, img, project['categories'], heatmap_path)
         output.append([project[weights]] + out)
 

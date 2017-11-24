@@ -335,6 +335,7 @@ def export_config(config, weights, extra_conv):
                'extra_conv': extra_conv,
                'number_categories': config['number_categories'],
                'categories': config['categories'],
+               'augmentations': config['augmentations'],
                'server_weights': server_weights}
     store_config(project, suffix = os.path.join('export', config['name']))
     call(['tar', '-zcvf', export_tar, '-C', os.path.expanduser('~/.transfer/export'), config['name']])

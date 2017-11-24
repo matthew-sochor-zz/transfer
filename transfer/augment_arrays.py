@@ -1,5 +1,6 @@
 import os
 from subprocess import call
+
 from tqdm import tqdm
 import numpy as np
 from keras.preprocessing.image import ImageDataGenerator
@@ -45,6 +46,24 @@ def gen_augment_arrays(array, label, augmentations):
     for array_aug, label_aug in zip(array_augs, label_augs):
         yield array_aug, label_aug
 
+def gen_test_augment_arrays(array, label, augmentations):
+    auggen = ImageDataGenerator(featurewise_center = augmentations['featurewise_center'],
+                                samplewise_center = augmentations['samplewise_center'],
+                                featurewise_std_normalization = augmentations['featurewise_std_normalization'],
+                                samplewise_std_normalization = augmentations['samplewise_std_normalization'],
+                                zca_whitening = augmentations['zca_whitening'],
+                                rescale = augmentations['rescale'])
+
+    array_augs, label_augs = next(auggen.flow(np.tile(array[np.newaxis],
+                                            (1, 1, 1, 1)),
+                                    np.tile(label[np.newaxis],
+                                            (1, 1)),
+                                    batch_size=1))
+
+    for array_aug, label_aug in zip(array_augs, label_augs):
+        yield array_aug, label_aug
+
+
 
 def augment_arrays(project):
 
@@ -60,10 +79,37 @@ def augment_arrays(project):
             call(['cp', os.path.join(array_path, file), augmented_path])
 
     else:
-        print('Generating image augmentations')
+        print('Generating image augmentations for train:')
 
         for img_idx, (array, label) in tqdm(enumerate(gen_arrays_from_dir(array_path))):
             for aug_idx, (array_aug, label_aug) in enumerate(gen_augment_arrays(array, label, project['augmentations'])):
+                cat_idx = np.argmax(label_aug)
+                cat = project['categories'][cat_idx]
+                img_name = '{}-{:02d}-img-{}-{}'.format(img_idx, aug_idx,
+                                                            cat, cat_idx)
+                label_name = '{}-{:02d}-label-{}-{}'.format(img_idx, aug_idx,
+                                                            cat, cat_idx)
+                aug_path = os.path.join(augmented_path, img_name)
+                label_path = os.path.join(augmented_path, label_name)
+                np.save(aug_path, array_aug)
+                np.save(label_path, label_aug)
+
+    array_path = os.path.join(project['path'], 'array', 'test')
+    augmented_path = os.path.join(project['path'], 'augmented', 'test')
+    call(['rm', '-rf', augmented_path])
+    call(['mkdir', '-p', augmented_path])
+
+    if project['augmentations'] is None:
+        print('No augmentations selected: copying train arrays as is.')
+        files = os.listdir(array_path)
+        for file in tqdm(files):
+            call(['cp', os.path.join(array_path, file), augmented_path])
+
+    else:
+        print('Generating image augmentations for test:')
+
+        for img_idx, (array, label) in tqdm(enumerate(gen_arrays_from_dir(array_path))):
+            for aug_idx, (array_aug, label_aug) in enumerate(gen_test_augment_arrays(array, label, project['augmentations'])):
                 cat_idx = np.argmax(label_aug)
                 cat = project['categories'][cat_idx]
                 img_name = '{}-{:02d}-img-{}-{}'.format(img_idx, aug_idx,

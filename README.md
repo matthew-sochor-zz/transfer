@@ -1,8 +1,14 @@
-#Transfer - making transfer learning easy
+# Transfer - making transfer learning easy
 
 This is a command line tool to perform transfer learning of image classification.
 
 Currently, it will re-learn the resnet50 model trained on ImageNet.
+
+Furthermore, it provides a framework to serve your models!  You can export a trained model, import it on another computer later, make local predictions or setup a rest api to make predictions.
+
+## Acknowledgements/Help from
+
+Josiah Olsen (https://github.com/thenomemac), Erie Hack (http://eriehack.io/), fast.ai (http://www.fast.ai/), and Pat Lorch and the Cleveland Metroparks (trail cam detector coming soooooon).
 
 ## Setup
 
@@ -10,7 +16,7 @@ Prior to starting, organize the pictures you want to classify by label in a fold
 
 In a theoretical example where you are classifying if something is a hat or a donkey:
 
-'''
+```
 ~/donkey-vs-hat/img_data/hat/hat_1.jpg
 ~/donkey-vs-hat/img_data/hat/hat_2.jpg
 ...
@@ -18,7 +24,7 @@ In a theoretical example where you are classifying if something is a hat or a do
 ~/donkey-vs-hat/img_data/donkey/super_cute_donkey.jpg
 ~/donkey-vs-hat/img_data/donkey/donkey_in_a_hat_this_is_going_to_be_bad.jpg
 ...
-'''
+```
 
 Basically put all of your hat pictures in:
 
@@ -44,7 +50,7 @@ Run your project with:
 
 `transfer --run`
 
-or 
+or
 
 `transfer -r`
 
@@ -54,21 +60,10 @@ Want to re-fine your model with subsequent runs?  Go ahead by simply running aga
 
 `transfer -r`
 
-## Output
+## Predict on an image or directory
 
-All of your generated data and model weights are saved alongside the starting images.
+`transfer --predict`
 
-In the above example:
+## Setup a REST api to do predictions
 
-`~/donkey_vs_hat/`
-
-## Predict on directories or files
-
-You can either predict on your best model or last model.  To predict on your default image set, simply type:
-
-`transfer --best-predict`
-
-Or specify a path (can be a single file or a directory!):
-
-`transfer --best-predict ~/path/to/your/files`
-
+`transfer --prediction-rest-api`

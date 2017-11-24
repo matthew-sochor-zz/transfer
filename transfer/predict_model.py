@@ -21,6 +21,12 @@ from termcolor import colored
 from transfer.resnet50 import get_final_model, get_final_model_separated
 
 
+def get_image_data_generator(augmentations):
+    return ImageDataGenerator(samplewise_center = augmentations['samplewise_center'],
+                              samplewise_std_normalization = augmentations['samplewise_std_normalization'],
+                              rescale = augmentations['rescale'])
+
+
 def target_category_loss(x, category_index, nb_classes):
     return tf.multiply(x, K.one_hot([category_index], nb_classes))
 
@@ -75,7 +81,7 @@ def grad_cam(input_model, x_in, x, image, mid_image, category_index, layer_name,
     return np.uint8(cam), heatmap
 
 
-def prep_from_image(file_name, img_dim):
+def prep_from_image(file_name, img_dim, data_gen):
     img = np.array(load_img(file_name, target_size = (img_dim, img_dim, 3)))
     return preprocess_input(img[np.newaxis].astype(np.float32))
 

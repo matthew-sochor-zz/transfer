@@ -25,7 +25,7 @@ def pre_model(project):
 
     img_dim = 224 * project['img_size']
     print('Predicting pre-model for test')
-    val_pre_model(project['path'], 'array', 'test', img_dim)
+    val_pre_model(project['path'], 'augmented', 'test', img_dim)
     print('Predicting pre-model for train')
     val_pre_model(project['path'], 'augmented', 'train', img_dim)
 

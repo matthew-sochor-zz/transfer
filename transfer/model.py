@@ -36,7 +36,7 @@ def gen_minibatches(array_dir, batch_size):
         yield np.array(arrays), np.array(labels)
 
 
-def train_model(project, swap, extra_conv = False):
+def train_model(project, swap, last, extra_conv = False):
     if extra_conv:
         label = 'extra'
         weight_label = '-' + label + '-weights-'
@@ -54,11 +54,15 @@ def train_model(project, swap, extra_conv = False):
     if swap:
         train = 'test'
         test = 'train'
-        weights = 'resnet_last_weights'
     else:
         train = 'train'
         test = 'test'
+
+    if last:
+        weights = 'resnet_last_weights'
+    else:
         weights = 'resnet_best_weights'
+
 
     pre_model_path_test = os.path.join(source_path, 'pre_model', test)
     pre_model_path_train = os.path.join(source_path, 'pre_model', train)

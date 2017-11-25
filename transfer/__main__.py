@@ -68,6 +68,10 @@ def main(args = None):
                         action = 'store_true',
                         help = 'Train model on test set and test on train set')
 
+    parser.add_argument('--last',
+                        action = 'store_true',
+                        help = 'Start next round of training using last weights rather than best weights (default)')
+
     parser.add_argument('--predict',
                         action = 'store',
                         type = str,
@@ -119,10 +123,10 @@ def main(args = None):
             project = pre_model(project)
             update_config(project)
 
-        project = train_model(project, args.swap)
+        project = train_model(project, args.swap, args.last)
         update_config(project)
 
-        project = train_model(project, args.swap, extra_conv = True)
+        project = train_model(project, args.swap, args.last, extra_conv = True)
         update_config(project)
 
         print('')

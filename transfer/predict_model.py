@@ -79,13 +79,14 @@ def prep_from_image(file_name, img_dim, augmentations):
     img = np.array(load_img(file_name, target_size = (img_dim, img_dim, 3)))
     mean = np.mean(img)
     std = np.std(img)
-    if augmentations['samplewise_center']:
-        img -= mean
-    if augmentations['samplewise_std_normalization']:
-        img /= std
-    if augmentations['rescale'] is not None:
-        if augmentations['rescale'] > 0:
-            img *= augmentations['rescale']
+    if augmentations is not None:
+        if augmentations['samplewise_center']:
+            img -= mean
+        if augmentations['samplewise_std_normalization']:
+            img /= std
+        if augmentations['rescale'] is not None:
+            if augmentations['rescale'] > 0:
+                img *= augmentations['rescale']
     return preprocess_input(img[np.newaxis].astype(np.float32))
 
 

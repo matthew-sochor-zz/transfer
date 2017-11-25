@@ -258,18 +258,19 @@ def select_project(user_provided_project):
     return project
 
 
-def read_imported_config(import_path, project_name, projects):
+def read_imported_config(import_path, project_name, projects = None):
 
     # Oh god this logic is a disaster, user interfaces are hard
     unique_name = False
     project_path = os.path.join(import_path, project_name)
     while unique_name == False:
         unique_name = True
-        for project in projects:
-            if project['name'] == project_name:
-                print(colored('Project with this name already exists.', 'red'))
-                project_name = str_input('Provide a new project name: ')
-                unique_name = False
+        if projects is not None:
+            for project in projects:
+                if project['name'] == project_name:
+                    print(colored('Project with this name already exists.', 'red'))
+                    project_name = str_input('Provide a new project name: ')
+                    unique_name = False
 
     project_dest = os.path.expanduser(str_input('Provide a path for your predictions to be saved: '))
     if os.path.isdir(project_dest) == False:
@@ -306,19 +307,20 @@ def import_config(config_file):
         projects.append(import_project)
         store_config(projects)
 
-        print('Project successfully imported!')
-        print('Make predictions with:')
-        print('')
-        print(colored('transfer --predict [optional dir or file] --project ' + import_project['name'], 'yellow'))
-        print('')
-        print('Or start a prediction server with:')
-        print('')
-        print(colored('transfer --prediction-rest-api --project ' + import_project['name'], 'yellow'))
     else:
-        call(['cp', os.path.join(import_path, project, 'config.yaml'), os.path])
+        call(['cp', os.path.join(import_path, project_name, 'config.yaml'), os.path.join(transfer_path, 'config.yaml')git ])
         print(os.listdir(import_path))
+        import_project = read_imported_config(import_path, project_name)
+        store_config([import_project])
 
-    print(config_file)
+    print('Project successfully imported!')
+    print('Make predictions with:')
+    print('')
+    print(colored('transfer --predict [optional dir or file] --project ' + import_project['name'], 'yellow'))
+    print('')
+    print('Or start a prediction server with:')
+    print('')
+    print(colored('transfer --prediction-rest-api --project ' + import_project['name'], 'yellow'))
 
 
 def export_config(config, weights, extra_conv):

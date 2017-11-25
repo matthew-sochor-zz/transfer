@@ -94,7 +94,7 @@ def gen_from_directory(directory, img_dim, project):
 
     for file_name in file_names:
         if ((file_name.find('.jpg') > 0) or (file_name.find('.jpeg') > 0) or (file_name.find('.png') > 0)):
-            yield prep_from_image(os.path.join(directory, file_name), img_dim), os.path.join(directory, file_name, project['augmentations'])
+            yield prep_from_image(os.path.join(directory, file_name), img_dim, project['augmentations']), os.path.join(directory, file_name)
 
 
 def predict_model(project, weights, user_files, extra_conv = False):

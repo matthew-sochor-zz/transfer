@@ -308,7 +308,7 @@ def import_config(config_file):
         store_config(projects)
 
     else:
-        call(['cp', os.path.join(import_path, project_name, 'config.yaml'), os.path.join(transfer_path, 'config.yaml')git ])
+        call(['cp', os.path.join(import_path, project_name, 'config.yaml'), os.path.join(transfer_path, 'config.yaml')])
         print(os.listdir(import_path))
         import_project = read_imported_config(import_path, project_name)
         store_config([import_project])

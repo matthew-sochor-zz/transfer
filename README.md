@@ -6,10 +6,6 @@ Currently, it will re-learn the resnet50 model trained on ImageNet.
 
 Furthermore, it provides a framework to serve your models!  You can export a trained model, import it on another computer later, make local predictions or setup a rest api to make predictions.
 
-## Acknowledgements/Help from
-
-Josiah Olsen (https://github.com/thenomemac), Erie Hack (http://eriehack.io/), fast.ai (http://www.fast.ai/), and Pat Lorch and the Cleveland Metroparks (trail cam detector coming soooooon).
-
 ## Setup
 
 Prior to starting, organize the pictures you want to classify by label in a folder.

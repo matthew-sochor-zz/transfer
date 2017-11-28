@@ -94,9 +94,9 @@ def model_input(project):
     print('Select model weights:')
     print('[0] resnet best weights: ', colored(os.path.split(project['resnet_best_weights'])[-1], 'cyan'))
     print('[1] resnet last weights: ', colored(os.path.split(project['resnet_last_weights'])[-1], 'cyan'))
-    print('[2] resnet w/ extra conv best weights: ', colored(os.path.split(project['extra_best_weights'])[-1], 'cyan'))
-    print('[3] resnet w/ extra conv last weights: ', colored(os.path.split(project['extra_last_weights'])[-1], 'cyan'))
-    model_choice = int_input('choice', 0, 3, show_range = False)
+    #print('[2] resnet w/ extra conv best weights: ', colored(os.path.split(project['extra_best_weights'])[-1], 'cyan'))
+    #print('[3] resnet w/ extra conv last weights: ', colored(os.path.split(project['extra_last_weights'])[-1], 'cyan'))
+    model_choice = int_input('choice', 0, 1, show_range = False)
     weights = ['resnet_best_weights', 'resnet_last_weights', 'extra_best_weights', 'extra_last_weights'][model_choice]
     if model_choice < 2:
         extra_conv = False

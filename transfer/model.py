@@ -85,7 +85,8 @@ def train_model(project, swap, last, extra_conv = False):
     pre_model, model = pre_post_function(img_dim,
                                          conv_dim,
                                          len(project['categories']),
-                                         model_weights = project[weights])
+                                         model_weights = project[weights],
+                                         depth = project['depth'])
 
     if extra_conv:
         lr = 0.001

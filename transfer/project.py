@@ -49,6 +49,7 @@ def configure():
     learning_rate = float_input('learning rate (suggested: 0.001)', 0, 1)
     learning_rate_modifier = int_input('learing rate modifier (suggested: 5)', 1, 100)
     num_epochs = int_input('number of epochs (suggested: 10)', 1, 100)
+    depth = int_input('depth of modeling (suggested: 1)', 1, 2)
     print('Select image resolution:')
     print('[0] low (224 px)')
     print('[1] mid (448 px)')
@@ -77,6 +78,7 @@ def configure():
                'resnet_learning_rate_modifier': learning_rate_modifier,
                'extra_learning_rate_modifier': learning_rate_modifier,
                'epochs': num_epochs,
+               'depth': depth,
                'img_size': img_size,
                'augmentations': augmentations,
                'is_split': False,

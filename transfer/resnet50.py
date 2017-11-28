@@ -2,7 +2,7 @@ import os
 from subprocess import call
 
 import numpy as np
-from keras.layers import Input, Activation, Conv2D, AveragePooling2D, GlobalAveragePooling2D, BatchNormalization, Dropout, Dense
+from keras.layers import Input, Activation, Conv2D, AveragePooling2D, Flatten, BatchNormalization, Dropout, Dense
 from keras.models import Model
 from keras import layers
 from keras.applications.resnet50 import ResNet50
@@ -32,35 +32,55 @@ def get_resnet_model(img_dim):
     array_input = Input(shape=(img_dim, img_dim, 3))
     resnet = ResNet50(include_top=False,
                      weights='imagenet',
-                     input_tensor=array_input,
-                     pooling='avg')
+                     input_tensor=array_input)
     return resnet
 
 
-def get_pre_model(img_dim):
+def get_pre_model(img_dim, depth = 1):
     resnet = get_resnet_model(img_dim)
-    popped, pre_model = pop_layer(resnet, 12)
+    if depth == 2:
+        popped, pre_model = pop_layer(resnet, 21)
+    else:
+        popped, pre_model = pop_layer(resnet, 11)
     return popped, pre_model
 
 
-def get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = None, extra_conv = False, end_copy = False):
+def get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = None, extra_conv = False, end_copy = False, depth = 1):
 
-    popped, pre_model = get_pre_model(img_dim)
+    popped, pre_model = get_pre_model(img_dim, depth = depth)
 
     input_dims = (conv_dim, conv_dim, 2048)
     # Take last 12 layers from resnet 50 with their starting weights!
     x_in = Input(shape = input_dims)
 
-    x = popped[11](x_in)
-    x = popped[10](x)
+    if depth == 2:
+        x = popped[20](x_in)
+        x = popped[19](x)
+        x = Activation('relu')(x)
+
+        x = popped[17](x)
+        x = popped[16](x)
+        x = Activation('relu')(x)
+
+        x = popped[14](x)
+        x = popped[13](x)
+
+        x = layers.add([x, x_in])
+        x = Activation('relu')(x)
+
+        x = popped[10](x)
+    else:
+        x = popped[10](x_in)
+
+    x = popped[9](x)
     x = Activation('relu')(x)
 
-    x = popped[8](x)
     x = popped[7](x)
+    x = popped[6](x)
     x = Activation('relu')(x)
 
-    x = popped[5](x)
     x = popped[4](x)
+    x = popped[3](x)
 
     x = layers.add([x, x_in])
     x = Activation('relu')(x)
@@ -77,10 +97,7 @@ def get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = Non
     else:
         x = AveragePooling2D((7, 7), name = 'avg_pool')(x_in_2)
 
-    x = GlobalAveragePooling2D()(x)
-
-    x = BatchNormalization()(x)
-    x = Dropout(0.2)(x)
+    x = Flatten()(x)
     x = Dense(number_categories, activation = 'softmax')(x)
 
     end_model = Model(x_in_2, x)
@@ -106,10 +123,7 @@ def get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = Non
         else:
             x = AveragePooling2D((7, 7), name = 'avg_pool')(x_in_2_copy)
 
-        x = GlobalAveragePooling2D()(x)
-
-        x = BatchNormalization()(x)
-        x = Dropout(0.2)(x)
+        x = Flatten()(x)
         x = Dense(number_categories, activation = 'softmax')(x)
 
         end_model_copy = Model(x_in_2_copy, x)
@@ -120,9 +134,9 @@ def get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = Non
         return pre_model, post_model
 
 
-def get_final_model(img_dim, conv_dim, number_categories, weights, extra_conv = False):
+def get_final_model(img_dim, conv_dim, number_categories, weights, extra_conv = False, depth = 1):
 
-    pre_model, post_model = get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = weights, extra_conv = extra_conv)
+    pre_model, post_model = get_pre_post_model(img_dim, conv_dim, number_categories, model_weights = weights, extra_conv = extra_conv, depth = depth)
     x_in = Input(shape = (img_dim, img_dim, 3))
     x = pre_model(x_in)
     x = post_model(x)

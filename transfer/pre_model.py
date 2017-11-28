@@ -25,21 +25,21 @@ def pre_model(project):
 
     img_dim = 224 * project['img_size']
     print('Predicting pre-model for test')
-    val_pre_model(project['path'], 'augmented', 'test', img_dim)
+    val_pre_model(project['path'], 'augmented', 'test', img_dim, depth = project['depth'])
     print('Predicting pre-model for train')
-    val_pre_model(project['path'], 'augmented', 'train', img_dim)
+    val_pre_model(project['path'], 'augmented', 'train', img_dim, depth = project['depth'])
 
     project['is_pre_model'] = True
     return project
 
-def val_pre_model(source_path, folder, val_group, img_dim):
+def val_pre_model(source_path, folder, val_group, img_dim, depth = 1):
 
     array_path = os.path.join(source_path, folder, val_group)
     pre_model_path = os.path.join(source_path, 'pre_model', val_group)
     call(['rm', '-rf', pre_model_path])
     call(['mkdir', '-p', pre_model_path])
 
-    popped, pre_model = get_pre_model(img_dim)
+    popped, pre_model = get_pre_model(img_dim, depth = depth)
 
     for (array, label, array_name, label_name) in tqdm(gen_array_from_dir(array_path)):
         array = preprocess_input(array[np.newaxis].astype(np.float32))

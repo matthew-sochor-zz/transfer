@@ -102,7 +102,7 @@ def predict_model(project, weights, user_files, extra_conv = False):
 
     img_dim = 224 * project['img_size']
     conv_dim = 7 * project['img_size']
-    model = get_final_model(img_dim, conv_dim, project['number_categories'], project[weights], extra_conv = extra_conv)
+    model = get_final_model(img_dim, conv_dim, project['number_categories'], project[weights], extra_conv = extra_conv, depth = project['depth'])
 
     output = []
     user_files = os.path.expanduser(user_files)

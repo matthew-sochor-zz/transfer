@@ -16,15 +16,13 @@ except ModuleNotFoundError:
     print('')
     raise ModuleNotFoundError
 import keras
-from keras import backend as K
 
-from transfer.split import split_all
 from transfer.project import configure, configure_server, select_project, update_config, import_config, export_config
 from transfer import images_to_array, pre_model
 from transfer.model import train_model
-from transfer.predict_model import predict_model, predict_activation_model
+from transfer.predict_model import predict_model
 from transfer.augment_arrays import augment_arrays
-from transfer.input import model_input, str_input
+from transfer.input import model_input, model_individual_input, str_input
 from transfer.server import start_server
 
 
@@ -64,13 +62,14 @@ def main(args = None):
                         action = 'store_true',
                         help = 'Run all transfer learning operations')
 
-    parser.add_argument('--swap',
+    parser.add_argument('-f','--final',
                         action = 'store_true',
-                        help = 'Train model on test set and test on train set')
+                        help = 'Run final training on all layers: Warning SLOW!')
 
-    parser.add_argument('--last',
+    parser.add_argument('-l','--last-weights',
                         action = 'store_true',
-                        help = 'Start next round of training using last weights rather than best weights (default)')
+                        dest = 'last',
+                        help = 'Restart from the last weights, rather than the best intermediate weights')
 
     parser.add_argument('--predict',
                         action = 'store',
@@ -97,8 +96,9 @@ def main(args = None):
         return
     elif args.export_config:
         project = select_project(args.project)
-        weights, extra_conv = model_input(project)
-        export_config(project, weights, extra_conv)
+        weights = model_input(project)
+        ind = model_individual_input(project, weights)
+        export_config(project, weights, ind)
         return
     elif args.configure:
         configure()
@@ -107,9 +107,6 @@ def main(args = None):
         project = select_project(args.project)
 
     if args.run:
-        if project['is_split'] == False:
-            project = split_all(project)
-            update_config(project)
 
         if project['is_array'] == False:
             project = images_to_array(project)
@@ -123,10 +120,7 @@ def main(args = None):
             project = pre_model(project)
             update_config(project)
 
-        project = train_model(project, args.swap, args.last)
-        update_config(project)
-
-        project = train_model(project, args.swap, args.last, extra_conv = True)
+        project = train_model(project, final = args.final, last = args.last)
         update_config(project)
 
         print('')
@@ -134,8 +128,6 @@ def main(args = None):
         print('')
         print('Best current model: ', colored(project['resnet_best_weights'], 'yellow'))
         print('Last current model: ', colored(project['resnet_last_weights'], 'yellow'))
-        print('Best current model w/ extra conv: ', colored(project['extra_best_weights'], 'yellow'))
-        print('Last current model w/ extra conv: ', colored(project['extra_last_weights'], 'yellow'))
         print('')
         print('To further refine the model, run again with:')
         print('')
@@ -148,11 +140,11 @@ def main(args = None):
 
     elif args.rest_api:
         if project['server_weights'] is not None:
-            start_server(project, 'server_weights', extra_conv = project['extra_conv'])
+            start_server(project, 'server_weights')
 
         elif project['resnet_best_weights'] is not None:
-            weights, extra_conv = model_input(project)
-            start_server(project, weights, extra_conv = extra_conv)
+            weights = model_input(project)
+            start_server(project, weights)
 
         else:
             print('Model is not trained.  Please first run your project:')
@@ -160,22 +152,15 @@ def main(args = None):
             print(colored('    transfer --run', 'green'))
             print('')
     elif args.predict is not None:
-        K.set_learning_phase(0)
         if args.predict == 'default':
             args.predict = str_input('Enter a path to file(s): ')
         if project['server_weights'] is not None:
-            if project['extra_conv']:
-                predict_activation_model(project, 'server_weights', args.predict)
-            else:
-                predict_model(project, 'server_weights', args.predict)
+            predict_model(project, 'server_weights', args.predict)
 
         elif project['resnet_best_weights'] is not None:
-            weights, extra_conv = model_input(project)
+            weights = model_input(project)
             print('Predicting on image(s) in: ', colored(args.predict, 'yellow'))
-            if extra_conv:
-                predict_activation_model(project, weights, args.predict)
-            else:
-                predict_model(project, weights, args.predict)
+            predict_model(project, weights, args.predict)
 
         else:
             print('Model is not trained.  Please first run your project:')

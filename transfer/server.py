@@ -8,9 +8,9 @@ from termcolor import colored
 import numpy as np
 
 from transfer.resnet50 import get_final_model
-from transfer.predict_model import prep_from_image
+from transfer.predict_model import prep_from_image, gen_from_directory, multi_predict
 
-def start_server(project, weights, extra_conv = False):
+def start_server(project, weights):
 
     app = Flask(__name__)
     api = Api(app)
@@ -20,7 +20,9 @@ def start_server(project, weights, extra_conv = False):
 
     img_dim = 224 * project['img_size']
     conv_dim = 7 * project['img_size']
-    model = get_final_model(img_dim, conv_dim, project['number_categories'], project[weights], extra_conv = extra_conv)
+    models = []
+    for weight in project[weights]:
+        models.append(get_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
 
     class Predict(Resource):
         def post(self):
@@ -28,31 +30,29 @@ def start_server(project, weights, extra_conv = False):
             img_path = os.path.expanduser(args['img_path'])
             if os.path.isfile(img_path):
                 if img_path.lower().find('.png') > 0 or img_path.lower().find('.jpg') > 0 or img_path.lower().find('.jpeg') > 0:
-                    img = prep_from_image(img_path, img_dim, project['augmentations'])
-                    predicted = model.predict(img)
-                    pred_list = [float(p) for p in predicted[0]]
+                    aug_gen = prep_from_image(img_path, img_dim, project['augmentations'])
+                    pred_list, predicted = multi_predict(aug_gen, models)
+                    pred_list = [[float(p) for p in pred] for pred in list(pred_list)]
                     result = {'weights': project[weights],
-                            'image_path': img_path,
-                            'predicted': project['categories'][np.argmax(predicted)],
-                            'classes': project['categories'],
-                            'class_predictions': pred_list}
+                             'image_path': img_path,
+                             'predicted': project['categories'][np.argmax(predicted)],
+                             'classes': project['categories'],
+                             'class_predictions': pred_list}
 
                     return jsonify(result)
                 else:
                     return 'File must be a jpeg or png: ' + args['img_path']
             elif os.path.isdir(img_path):
                 result = []
-                for file_name in os.listdir(img_path):
-                    if file_name.lower().find('.png') > 0 or file_name.lower().find('.jpg') > 0 or file_name.lower().find('.jpeg') > 0:
-                        full_file_name = os.path.join(img_path, file_name)
-                        img = prep_from_image(full_file_name, img_dim, project['augmentations'])
-                        predicted = model.predict(img)
-                        pred_list = [float(p) for p in predicted[0]]
-                        result.append({'weights': project[weights],
-                                'image_path': full_file_name,
-                                'predicted': project['categories'][np.argmax(predicted)],
-                                'classes': project['categories'],
-                                'class_predictions': pred_list})
+
+                for aug_gen, file_name in gen_from_directory(img_path, img_dim, project):
+                    pred_list, predicted = multi_predict(aug_gen, models)
+                    pred_list = [[float(p) for p in pred] for pred in list(pred_list)]
+                    result.append({'weights': project[weights],
+                            'image_path': file_name,
+                            'predicted': project['categories'][np.argmax(predicted)],
+                            'classes': project['categories'],
+                            'class_predictions': pred_list})
                 if len(result) > 0:
                     return jsonify(result)
                 else:

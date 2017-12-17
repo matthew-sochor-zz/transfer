@@ -44,11 +44,16 @@ def configure():
             path_unset = False
 
     api_port = int_input('port for local prediction API (suggested: 5000)', 1024, 49151)
-    test_percent = int_input('percentage of trips to assign to test (suggested: 20)', 1, 50)
+    kfold = int_input('number of folds to use (suggested: 5)', 3, 10)
+    kfold_every = bool_input('fit a model for every fold (if false, just fit one)')
+    print('Warning: if working on a remote computer, you may not be able to plot!')
+    plot_cm = bool_input('plot a confusion matrix after training')
     batch_size = int_input('batch size (suggested: 8)', 1, 64)
     learning_rate = float_input('learning rate (suggested: 0.001)', 0, 1)
+    learning_rate_decay = float_input('learning decay rate (suggested: 0.000001)', 0, 1)
+    cycle = int_input('number of cycles before resetting the learning rate (suggested: 3)', 1, 10)
     learning_rate_modifier = int_input('learing rate modifier (suggested: 5)', 1, 100)
-    num_epochs = int_input('number of epochs (suggested: 10)', 1, 100)
+    num_rounds = int_input('number of rounds (suggested: 3)', 1, 100)
     print('Select image resolution:')
     print('[0] low (224 px)')
     print('[1] mid (448 px)')
@@ -69,27 +74,28 @@ def configure():
     project = {'name': project_name,
                'img_path': image_path,
                'path': project_path,
+               'plot': plot_cm,
                'api_port': api_port,
-               'test_percent': test_percent,
+               'kfold': kfold,
+               'kfold_every': kfold_every,
+               'cycle': cycle,
+               'seed': np.random.randint(9999),
                'batch_size': batch_size,
                'resnet_learning_rate': learning_rate,
-               'extra_learning_rate': learning_rate,
+               'resnet_learning_rate_decay': learning_rate_decay,
                'resnet_learning_rate_modifier': learning_rate_modifier,
-               'extra_learning_rate_modifier': learning_rate_modifier,
-               'epochs': num_epochs,
+               'rounds': num_rounds,
                'img_size': img_size,
                'augmentations': augmentations,
                'is_split': False,
                'is_array': False,
                'is_augmented': False,
                'is_pre_model': False,
+               'is_final': False,
                'model_round': 0,
                'server_weights': None,
                'resnet_last_weights': None,
-               'extra_last_weights': None,
-               'resnet_best_weights': None,
-               'extra_best_weights': None,
-               'seed': None}
+               'resnet_best_weights': None}
 
     config.append(project)
     store_config(config)
@@ -150,12 +156,9 @@ def configure_server():
         else:
             print('Cannot find the weight file: ', server_weights)
 
-    extra_conv = bool_input('Do the weights have the extra convolutional layer? ')
-
     project = {'name': project_name,
                'api_port': api_port,
                'img_size': img_size,
-               'extra_conv': extra_conv,
                'number_categories': num_categories,
                'server_weights': server_weights}
 
@@ -175,11 +178,14 @@ def select_augmentations():
     print('Select augmentations:')
     print(colored('Note: defaults are all zero or false.', 'cyan'))
     rounds = int_input('number of augmentation rounds', 1, 100)
+    # These three are not implemented because they require training and then that would
+    #  need to get propogated over which is complicated for prediction
+
     featurewise_center = False #bool_input('featurewise_center: set input mean to 0 over the dataset.')
     featurewise_std_normalization = False #bool_input('featurewise_std_normalization: divide inputs by std of the dataset.')
+    zca_whitening = False #bool_input('zca_whitening: apply ZCA whitening.')
     samplewise_center = False #bool_input('samplewise_center: set each sample mean to 0.')
     samplewise_std_normalization = False #bool_input('samplewise_std_normalization: divide each input by its std.')
-    zca_whitening = False #bool_input('zca_whitening: apply ZCA whitening.')
     rotation_range = int_input('rotation_range: degrees', 0, 180, True)
     width_shift_range = float_input('width_shift_range: fraction of total width.', 0., 1.)
     height_shift_range = float_input('height_shift_range: fraction of total width.', 0., 1.)
@@ -194,7 +200,7 @@ def select_augmentations():
         cval = 0.0
     horizontal_flip = bool_input('horizontal_flip: whether to randomly flip images horizontally.')
     vertical_flip = bool_input('vertical_flip: whether to randomly flip images vertically.')
-    rescale = int_input('rescale: rescaling factor. If None or 0, no rescaling is applied, otherwise we multiply the data by the value provided.', 0, 255)
+    rescale = None #int_input('rescale: rescaling factor. If None or 0, no rescaling is applied, otherwise we multiply the data by the value provided.', 0, 255)
     if rescale == 0:
         rescale = None
 
@@ -280,7 +286,7 @@ def read_imported_config(import_path, project_name, projects = None):
     with open(os.path.join(project_path, 'config.yaml'), 'r') as fp:
         import_project = yaml.load(fp.read())
     import_project['name'] = project_name
-    import_project['server_weights'] = os.path.join(project_path, 'server_model.hdf5')
+    import_project['server_weights'] = [os.path.join(project_path, weight) for weight in os.listdir(project_path) if weight.find('.hdf5') > 0]
     import_project['path'] = project_dest
     return import_project
 
@@ -323,24 +329,32 @@ def import_config(config_file):
     print(colored('transfer --prediction-rest-api --project ' + import_project['name'], 'yellow'))
 
 
-def export_config(config, weights, extra_conv):
+def export_config(config, weights, ind = None):
     export_path = os.path.expanduser(os.path.join('~/.transfer/export', config['name']))
-    export_tar = export_path + '.tar.gz'
+    if ind is None:
+        export_tar = export_path + '_' + weights + '.tar.gz'
+    else:
+        export_tar = export_path + '_' + weights + '_kfold_' + str(ind) + '.tar.gz'
     call(['mkdir','-p', export_path])
-
-    server_weights = os.path.join(export_path, 'server_model.hdf5')
-    call(['cp', config[weights], server_weights])
-
+    server_weights = []
+    if ind is None:
+        for i in range(len(config[weights])):
+            server_weights.append(os.path.join(export_path, 'server_model_kfold_' + str(i) +'.hdf5'))
+            call(['cp', config[weights][i], server_weights[-1]])
+    else:
+        server_weights = [os.path.join(export_path, 'server_model_kfold_' + str(ind) +'.hdf5')]
+        call(['cp', config[weights][ind], server_weights[-1]])
     project = {'name': config['name'],
                'api_port': config['api_port'],
                'img_size': config['img_size'],
-               'extra_conv': extra_conv,
                'number_categories': config['number_categories'],
                'categories': config['categories'],
                'augmentations': config['augmentations'],
+               'is_final': config['is_final'],
                'server_weights': server_weights}
     store_config(project, suffix = os.path.join('export', config['name']))
     call(['tar', '-zcvf', export_tar, '-C', os.path.expanduser('~/.transfer/export'), config['name']])
+    call(['rm','-rf', export_path])
     print('Project successfully exported, please save the following file for re-import to transfer')
     print('')
     print(colored(export_tar, 'green'))

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="transfer",
-    version="0.21",
+    version="0.22",
     description="Transfer learning for deep image classification",
     packages=find_packages(),
 
@@ -18,7 +18,9 @@ setup(
                       'colorama',
                       'flask',
                       'flask_jsonpify',
-                      'flask_restful'],
+                      'flask_restful',
+                      'matplotlib',
+                      'seaborn'],
     python_requires='>=3',
 
     # metadata for upload to PyPI

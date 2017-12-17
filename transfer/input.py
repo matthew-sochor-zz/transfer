@@ -25,7 +25,7 @@ def int_input(message, low, high, show_range = True):
         else:
             suffix = ''
         inp = input('Enter a ' + message + suffix + ': ')
-        if re.match('^[0-9]+$', inp) is not None:
+        if re.match('^-?[0-9]+$', inp) is not None:
             int_in = int(inp)
         else:
             print(colored('Must be an integer, try again!', 'red'))
@@ -89,17 +89,27 @@ def str_input(message, inputs = None):
             print(inputs)
     return user_str
 
+
 def model_input(project):
 
     print('Select model weights:')
-    print('[0] resnet best weights: ', colored(os.path.split(project['resnet_best_weights'])[-1], 'cyan'))
-    print('[1] resnet last weights: ', colored(os.path.split(project['resnet_last_weights'])[-1], 'cyan'))
-    print('[2] resnet w/ extra conv best weights: ', colored(os.path.split(project['extra_best_weights'])[-1], 'cyan'))
-    print('[3] resnet w/ extra conv last weights: ', colored(os.path.split(project['extra_last_weights'])[-1], 'cyan'))
-    model_choice = int_input('choice', 0, 3, show_range = False)
-    weights = ['resnet_best_weights', 'resnet_last_weights', 'extra_best_weights', 'extra_last_weights'][model_choice]
-    if model_choice < 2:
-        extra_conv = False
-    else:
-        extra_conv = True
-    return weights, extra_conv
+    print('[0] resnet best weights: ', colored(os.path.split(project['resnet_best_weights'][0])[-1], 'cyan'))
+    print('[1] resnet last weights: ', colored(os.path.split(project['resnet_last_weights'][0])[-1], 'cyan'))
+
+    model_choice = int_input('choice', 0, 1, show_range = False)
+    weights = ['resnet_best_weights', 'resnet_last_weights'][model_choice]
+
+    return weights
+
+
+def model_individual_input(project, weights):
+
+    print('What individual weights would you like to use?')
+    print('[-1]', colored('Use all weights', 'green'))
+    for i in range(len(project[weights])):
+        print('[' + str(i) + ']', colored(os.path.split(project[weights][i])[-1], 'cyan'))
+
+    model_choice = int_input('choice', -1, len(project[weights]), show_range = False)
+    if model_choice == -1:
+        return None
+    return model_choice

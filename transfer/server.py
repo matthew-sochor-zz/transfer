@@ -7,7 +7,8 @@ from colorama import init
 from termcolor import colored
 import numpy as np
 
-from transfer.resnet50 import get_final_model
+from transfer.resnet50 import get_resnet_final_model
+from transfer.xception import get_xception_final_model
 from transfer.predict_model import prep_from_image, gen_from_directory, multi_predict
 
 def start_server(project, weights):
@@ -22,7 +23,10 @@ def start_server(project, weights):
     conv_dim = 7 * project['img_size']
     models = []
     for weight in project[weights]:
-        models.append(get_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
+        if project['architecture'] == 'resnet50':
+            models.append(get_resnet_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
+        else:
+            models.append(get_xception_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
 
     class Predict(Resource):
         def post(self):
@@ -31,7 +35,7 @@ def start_server(project, weights):
             if os.path.isfile(img_path):
                 if img_path.lower().find('.png') > 0 or img_path.lower().find('.jpg') > 0 or img_path.lower().find('.jpeg') > 0:
                     aug_gen = prep_from_image(img_path, img_dim, project['augmentations'])
-                    pred_list, predicted = multi_predict(aug_gen, models)
+                    pred_list, predicted = multi_predict(aug_gen, models, project['architecture'])
                     pred_list = [[float(p) for p in pred] for pred in list(pred_list)]
                     result = {'weights': project[weights],
                              'image_path': img_path,
@@ -46,7 +50,7 @@ def start_server(project, weights):
                 result = []
 
                 for aug_gen, file_name in gen_from_directory(img_path, img_dim, project):
-                    pred_list, predicted = multi_predict(aug_gen, models)
+                    pred_list, predicted = multi_predict(aug_gen, models, project['architecture'])
                     pred_list = [[float(p) for p in pred] for pred in list(pred_list)]
                     result.append({'weights': project[weights],
                             'image_path': file_name,

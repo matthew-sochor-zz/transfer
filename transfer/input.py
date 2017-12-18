@@ -93,11 +93,11 @@ def str_input(message, inputs = None):
 def model_input(project):
 
     print('Select model weights:')
-    print('[0] resnet best weights: ', colored(os.path.split(project['resnet_best_weights'][0])[-1], 'cyan'))
-    print('[1] resnet last weights: ', colored(os.path.split(project['resnet_last_weights'][0])[-1], 'cyan'))
+    print('[0] best weights: ', colored(os.path.split(project['best_weights'][0])[-1], 'cyan'))
+    print('[1] last weights: ', colored(os.path.split(project['last_weights'][0])[-1], 'cyan'))
 
     model_choice = int_input('choice', 0, 1, show_range = False)
-    weights = ['resnet_best_weights', 'resnet_last_weights'][model_choice]
+    weights = ['best_weights', 'last_weights'][model_choice]
 
     return weights
 

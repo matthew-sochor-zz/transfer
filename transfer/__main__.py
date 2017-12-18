@@ -126,8 +126,8 @@ def main(args = None):
         print('')
         print(colored('Completed modeling round: ' + str(project['model_round']), 'cyan'))
         print('')
-        print('Best current model: ', colored(project['resnet_best_weights'], 'yellow'))
-        print('Last current model: ', colored(project['resnet_last_weights'], 'yellow'))
+        print('Best current model: ', colored(project['best_weights'], 'yellow'))
+        print('Last current model: ', colored(project['last_weights'], 'yellow'))
         print('')
         print('To further refine the model, run again with:')
         print('')
@@ -142,7 +142,7 @@ def main(args = None):
         if project['server_weights'] is not None:
             start_server(project, 'server_weights')
 
-        elif project['resnet_best_weights'] is not None:
+        elif project['best_weights'] is not None:
             weights = model_input(project)
             start_server(project, weights)
 
@@ -157,7 +157,7 @@ def main(args = None):
         if project['server_weights'] is not None:
             predict_model(project, 'server_weights', args.predict)
 
-        elif project['resnet_best_weights'] is not None:
+        elif project['best_weights'] is not None:
             weights = model_input(project)
             print('Predicting on image(s) in: ', colored(args.predict, 'yellow'))
             predict_model(project, weights, args.predict)

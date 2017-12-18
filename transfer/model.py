@@ -5,7 +5,8 @@ import numpy as np
 from keras.optimizers import Adam, SGD
 from keras.callbacks import ModelCheckpoint
 from keras.preprocessing.image import load_img
-from keras.applications.resnet50 import preprocess_input
+from keras.applications.resnet50 import preprocess_input as resnet_preprocess_input
+from keras.applications.xception import preprocess_input as xception_preprocess_input
 from keras import layers
 import pandas as pd
 from tqdm import tqdm
@@ -16,9 +17,10 @@ import seaborn as sns
 from colorama import init
 from termcolor import colored
 
-from transfer.resnet50 import get_pre_post_model, get_final_model
+from transfer.resnet50 import get_resnet_pre_post_model, get_resnet_final_model
+from transfer.xception import get_xception_pre_post_model, get_xception_final_model
 
-def gen_minibatches(array_dir, array_names, batch_size, final = False):
+def gen_minibatches(array_dir, array_names, batch_size, architecture, final = False):
 
     array_names = list(array_names)
 
@@ -33,7 +35,10 @@ def gen_minibatches(array_dir, array_names, batch_size, final = False):
             img_path = os.path.join(array_dir, array_name)
             array = np.load(img_path)
             if final:
-                array = np.squeeze(preprocess_input(array[np.newaxis].astype(np.float32)))
+                if architecture == 'resnet50':
+                    array = np.squeeze(resnet_preprocess_input(array[np.newaxis].astype(np.float32)))
+                else:
+                    array = np.squeeze(xception_preprocess_input(array[np.newaxis].astype(np.float32)))
 
             arrays.append(array)
             labels.append(np.load(img_path.replace('-img-','-label-')))
@@ -45,15 +50,15 @@ def no_folds_generator(pre_model_files):
     yield [i for i in range(len(pre_model_files))], -1
 
 
-def train_model(project, final = False, label = 'resnet', last = False):
-    weight_label = '-' + label + '-weights-'
+def train_model(project, final = False, last = False):
+    weight_label = '-' + project['architecture'] + '-weights-'
     source_path = project['path']
     weights_path = os.path.join(source_path, 'weights')
     plot_path = os.path.join(source_path, 'plots')
     if last:
-        weights = 'resnet_last_weights'
+        weights = 'last_weights'
     else:
-        weights = 'resnet_best_weights'
+        weights = 'best_weights'
 
     if final:
         weight_label += '-final-'
@@ -65,11 +70,11 @@ def train_model(project, final = False, label = 'resnet', last = False):
     call(['mkdir', '-p', weights_path])
     call(['mkdir', '-p', plot_path])
 
-    img_dim = 224 * project['img_size']
-    conv_dim = 7 * project['img_size']
+    img_dim = project['img_dim'] * project['img_size']
+    conv_dim = project['conv_dim'] * project['img_size']
 
-    lr =  project[label + '_learning_rate']
-    decay = project[label + '_learning_rate_decay']
+    lr =  project['learning_rate']
+    decay = project['learning_rate_decay']
 
     all_files = os.listdir(use_path)
     pre_model_files = list(filter(lambda x: r'-img-' in x, all_files))
@@ -118,27 +123,36 @@ def train_model(project, final = False, label = 'resnet', last = False):
         else:
             fold_weights = project[weights][i]
         if final:
-            model = get_final_model(img_dim, conv_dim, project['number_categories'], fold_weights, project['is_final'])
+            if project['architecture'] == 'resnet50':
+                model = get_resnet_final_model(img_dim, conv_dim, project['number_categories'], fold_weights, project['is_final'])
+            else:
+                model = get_xception_final_model(img_dim, conv_dim, project['number_categories'], fold_weights, project['is_final'])
 
             for i, layer in enumerate(model.layers[1].layers):
                 if len(layer.trainable_weights) > 0:
-                    if i < 80:
+                    if i < project['final_cutoff']:
                         mult = 0.01
                     else:
                         mult = 0.1
                     layer.learning_rate_multiplier = [mult for tw in layer.trainable_weights]
 
         else:
-            pre_model, model = get_pre_post_model(img_dim,
-                                                  conv_dim,
-                                                  len(project['categories']),
-                                                  model_weights = fold_weights)
+            if project['architecture'] == 'resnet50':
+                pre_model, model = get_resnet_pre_post_model(img_dim,
+                                                    conv_dim,
+                                                    len(project['categories']),
+                                                    model_weights = fold_weights)
+            else:
+                pre_model, model = get_xception_pre_post_model(img_dim,
+                                                    conv_dim,
+                                                    len(project['categories']),
+                                                    model_weights = fold_weights)
 
         pre_model_files_dedup_train = pre_model_files_df_dedup.iloc[train]
         train_ind = list(set(pre_model_files_dedup_train.ind))
         pre_model_files_train = pre_model_files_df.loc[train_ind]
 
-        gen_train = gen_minibatches(use_path, pre_model_files_train.files, project['batch_size'], final = final)
+        gen_train = gen_minibatches(use_path, pre_model_files_train.files, project['batch_size'], project['architecture'], final = final)
         number_train_samples = len(pre_model_files_train)
 
         if validate:
@@ -146,7 +160,7 @@ def train_model(project, final = False, label = 'resnet', last = False):
             test_ind = list(set(pre_model_files_dedup_test.ind))
             pre_model_files_test = pre_model_files_df.loc[test_ind]
 
-            gen_test = gen_minibatches(use_path, pre_model_files_test.files, project['batch_size'], final = final)
+            gen_test = gen_minibatches(use_path, pre_model_files_test.files, project['batch_size'], project['architecture'], final = final)
             number_test_samples = len(pre_model_files_test)
             validation_steps = (number_test_samples // project['batch_size'])
 
@@ -175,7 +189,7 @@ def train_model(project, final = False, label = 'resnet', last = False):
             model.fit_generator(gen_train,
                                 steps_per_epoch = steps_per_epoch,
                                 epochs = project['cycle'] * (j + 1),
-                                verbose = 2,
+                                verbose = 1,
                                 validation_data = gen_test,
                                 validation_steps = validation_steps,
                                 initial_epoch = j * project['cycle'],
@@ -214,7 +228,10 @@ def train_model(project, final = False, label = 'resnet', last = False):
                 img_path = os.path.join(use_path, array_name)
                 img = np.load(img_path)
                 if final:
-                    img = np.squeeze(preprocess_input(img[np.newaxis].astype(np.float32)))
+                    if project['architecture'] == 'resnet50':
+                        img = np.squeeze(resnet_preprocess_input(img[np.newaxis].astype(np.float32)))
+                    else:
+                        img = np.squeeze(xception_preprocess_input(img[np.newaxis].astype(np.float32)))
                 prediction = model.predict(img[np.newaxis])
                 best_predictions.append(project['categories'][np.argmax(prediction)])
                 true_label = np.load(img_path.replace('-img-','-label-'))
@@ -238,9 +255,8 @@ def train_model(project, final = False, label = 'resnet', last = False):
             best_weights.append(os.path.join(weights_path, weights_names[max_i]))
 
     project['number_categories'] = len(project['categories'])
-    project[label + '_learning_rate'] = project[label + '_learning_rate'] / project[label + '_learning_rate_modifier']
-    project[label + '_best_weights'] = best_weights
-    project[label + '_last_weights'] = last_weights
+    project['best_weights'] = best_weights
+    project['last_weights'] = last_weights
     project['is_final'] = final
 
     return project

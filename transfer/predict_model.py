@@ -6,7 +6,8 @@ from keras.layers import Input
 from keras.layers.core import Lambda
 from keras.models import Model
 from keras.preprocessing.image import load_img
-from keras.applications.resnet50 import preprocess_input
+from keras.applications.resnet50 import preprocess_input as resnet_preprocess_input
+from keras.applications.xception import preprocess_input as xception_preprocess_input
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import pandas as pd
@@ -15,7 +16,8 @@ import numpy as np
 from colorama import init
 from termcolor import colored
 
-from transfer.resnet50 import get_final_model
+from transfer.resnet50 import get_resnet_final_model
+from transfer.xception import get_xception_final_model
 from transfer.augment_arrays import gen_augment_arrays
 
 
@@ -33,10 +35,13 @@ def gen_from_directory(directory, img_dim, project):
             yield prep_from_image(os.path.join(directory, file_name), img_dim, project['augmentations']), os.path.join(directory, file_name)
 
 
-def multi_predict(aug_gen, models):
+def multi_predict(aug_gen, models, architecture):
     predicted = []
     for img, _ in aug_gen:
-        img = preprocess_input(img[np.newaxis].astype(np.float32))
+        if architecture == 'resnet50':
+            img = resnet_preprocess_input(img[np.newaxis].astype(np.float32))
+        else:
+            img = xception_preprocess_input(img[np.newaxis].astype(np.float32))
         for model in models:
             predicted.append(model.predict(img))
     predicted = np.array(predicted).sum(axis=0)
@@ -45,22 +50,25 @@ def multi_predict(aug_gen, models):
 
 def predict_model(project, weights, user_files):
 
-    img_dim = 224 * project['img_size']
-    conv_dim = 7 * project['img_size']
+    img_dim = project['img_dim'] * project['img_size']
+    conv_dim = project['conv_dim'] * project['img_size']
     models = []
     for weight in project[weights]:
-        models.append(get_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
+        if project['architecture'] == 'resnet50':
+            models.append(get_resnet_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
+        else:
+            models.append(get_xception_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
 
     output = []
     user_files = os.path.expanduser(user_files)
     if os.path.isdir(user_files):
         for aug_gen, file_name in tqdm(gen_from_directory(user_files, img_dim, project)):
-            predicted, pred_list = multi_predict(aug_gen, models)
+            predicted, pred_list = multi_predict(aug_gen, models, project['architecture'])
             output.append([project[weights], file_name, project['categories'][np.argmax(predicted)]] + pred_list)
 
     elif ((user_files.find('.jpg') > 0) or (user_files.find('.jpeg') > 0) or (user_files.find('.png') > 0)):
         aug_gen = prep_from_image(user_files, img_dim, project['augmentations'])
-        predicted, pred_list = multi_predict(aug_gen, models)
+        predicted, pred_list = multi_predict(aug_gen, models, project['architecture'])
         output.append([project[weights], user_files, project['categories'][np.argmax(predicted)]] + pred_list)
 
     else:

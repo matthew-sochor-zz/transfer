@@ -5,7 +5,7 @@ import numpy as np
 from keras.layers import Input, Activation, Conv2D, AveragePooling2D, Flatten, BatchNormalization, Dropout, Dense
 from keras.models import Model
 from keras import layers
-from keras.applications.resnet50 import ResNet50
+from keras.applications.xception import Xception
 
 
 def pop_layer(model, count=1):
@@ -28,56 +28,40 @@ def pop_layer(model, count=1):
     return popped, model
 
 
-def get_resnet_model(img_dim):
+def get_xception_model(img_dim):
     array_input = Input(shape=(img_dim, img_dim, 3))
-    resnet = ResNet50(include_top=False,
+    xception = Xception(include_top=True,
                      weights='imagenet',
                      input_tensor=array_input,
                      pooling='avg')
-    return resnet
+    return xception
 
 
-def get_resnet_pre_model(img_dim):
-    resnet = get_resnet_model(img_dim)
-    popped, pre_model = pop_layer(resnet, 12)
+def get_xception_pre_model(img_dim):
+    xception = get_xception_model(img_dim)
+    popped, pre_model = pop_layer(xception, 8)
     return popped, pre_model
 
 
-def get_resnet_pre_post_model(img_dim, conv_dim, number_categories, model_weights = None):
+def get_xception_pre_post_model(img_dim, conv_dim, number_categories, model_weights = None):
 
-    popped, pre_model = get_resnet_pre_model(img_dim)
+    popped, pre_model = get_xception_pre_model(img_dim)
 
-    input_dims = (conv_dim, conv_dim, 2048)
-    # Take last 12 layers from resnet 50 with their starting weights!
+    input_dims = (conv_dim, conv_dim, 1024)
+    # Take last 8 layers from xception with their starting weights!
     x_in = Input(shape = input_dims)
+    x = popped[7](x_in)
+    x = popped[6](x)
+    x = Activation('relu', name='block14_sepconv1_act')(x)
 
-    x = popped[11](x_in)
-    x = popped[10](x)
-    x = Activation('relu')(x)
-
-    x = popped[8](x)
-    x = popped[7](x)
-    x = Activation('relu')(x)
-
-    x = popped[5](x)
     x = popped[4](x)
+    x = popped[3](x)
+    x = Activation('relu', name='block14_sepconv2_act')(x)
 
-    x = layers.add([x, x_in])
-    x = Activation('relu')(x)
-    mid_model = Model(x_in, x)
+    x = popped[1](x)
+    x = Dense(number_categories, activation = 'softmax', name='predictions')(x)
 
-    x_in_2 = Input(shape = input_dims)
-
-    x = AveragePooling2D((7, 7), name = 'avg_pool')(x_in_2)
-    x = Flatten()(x)
-    x = Dense(number_categories, activation = 'softmax')(x)
-
-    end_model = Model(x_in_2, x)
-
-    x_in_3 = Input(shape = input_dims)
-    x = mid_model(x_in_3)
-    x = end_model(x)
-    post_model = Model(x_in_3, x)
+    post_model = Model(x_in, x)
 
     if model_weights is not None:
         print('Loading model weights:', model_weights)
@@ -86,13 +70,13 @@ def get_resnet_pre_post_model(img_dim, conv_dim, number_categories, model_weight
     return pre_model, post_model
 
 
-def get_resnet_final_model(img_dim, conv_dim, number_categories, weights, is_final):
+def get_xception_final_model(img_dim, conv_dim, number_categories, weights, is_final):
 
     if is_final:
         pre_post_weights = None
     else:
         pre_post_weights = weights
-    pre_model, post_model = get_resnet_pre_post_model(img_dim, conv_dim, number_categories, model_weights = pre_post_weights)
+    pre_model, post_model = get_xception_pre_post_model(img_dim, conv_dim, number_categories, model_weights = pre_post_weights)
     x_in = Input(shape = (img_dim, img_dim, 3))
     x = pre_model(x_in)
     x = post_model(x)

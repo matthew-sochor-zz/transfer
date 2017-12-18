@@ -10,7 +10,7 @@ def images_to_array(project):
 
     categories = [d for d in os.listdir(project['img_path']) if os.path.isdir(os.path.join(project['img_path'],d))]
     project['categories'] = categories
-    img_dim = 224 * project['img_size']
+    img_dim = project['img_dim'] * project['img_size']
     print('Converting images to array')
     category_rounds = val_images_to_array(project['img_path'], project['path'], img_dim, project['categories'])
 

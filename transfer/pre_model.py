@@ -2,10 +2,12 @@ import os
 from subprocess import call
 
 import numpy as np
-from keras.applications.resnet50 import preprocess_input
+from keras.applications.resnet50 import preprocess_input as resnet_preprocess_input
+from keras.applications.xception import preprocess_input as xception_preprocess_input
 from tqdm import tqdm
 
-from transfer.resnet50 import get_pre_model
+from transfer.resnet50 import get_resnet_pre_model
+from transfer.xception import get_xception_pre_model
 
 def gen_array_from_dir(array_dir):
     array_files = sorted(os.listdir(array_dir))
@@ -23,25 +25,31 @@ def gen_array_from_dir(array_dir):
 
 def pre_model(project):
 
-    img_dim = 224 * project['img_size']
+    img_dim = project['img_dim'] * project['img_size']
     print('Predicting pre-model')
-    val_pre_model(project['path'], 'augmented', img_dim)
+    val_pre_model(project['path'], 'augmented', img_dim, project['architecture'])
 
     project['is_pre_model'] = True
     return project
 
 
-def val_pre_model(source_path, folder, img_dim):
+def val_pre_model(source_path, folder, img_dim, architechture):
 
     array_path = os.path.join(source_path, folder)
     pre_model_path = os.path.join(source_path, 'pre_model')
     call(['rm', '-rf', pre_model_path])
     call(['mkdir', '-p', pre_model_path])
 
-    popped, pre_model = get_pre_model(img_dim)
+    if architechture == 'resnet50':
+        popped, pre_model = get_resnet_pre_model(img_dim)
+    else:
+        popped, pre_model = get_xception_pre_model(img_dim)
 
     for (array, label, array_name, label_name) in tqdm(gen_array_from_dir(array_path)):
-        array = preprocess_input(array[np.newaxis].astype(np.float32))
+        if architechture == 'resnet50':
+            array = resnet_preprocess_input(array[np.newaxis].astype(np.float32))
+        else:
+            array = xception_preprocess_input(array[np.newaxis].astype(np.float32))
         array_pre_model = np.squeeze(pre_model.predict(array, batch_size=1))
 
         array_name = array_name.split('.')[0]

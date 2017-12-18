@@ -43,21 +43,34 @@ def configure():
         else:
             path_unset = False
 
+    print('Select architecture:')
+    print('[0] resnet50')
+    print('[1] xception')
+    architecture = int_input('choice', 0, 1, show_range = False)
+    if architecture == 0:
+        arch = 'resnet50'
+        img_dim = 224
+        conv_dim = 7
+        final_cutoff = 80
+    else:
+        arch = 'xception'
+        img_dim = 299
+        conv_dim = 10
+        final_cutoff = 80
     api_port = int_input('port for local prediction API (suggested: 5000)', 1024, 49151)
     kfold = int_input('number of folds to use (suggested: 5)', 3, 10)
-    kfold_every = bool_input('fit a model for every fold (if false, just fit one)')
+    kfold_every = bool_input('Fit a model for every fold? (if false, just fit one)')
     print('Warning: if working on a remote computer, you may not be able to plot!')
-    plot_cm = bool_input('plot a confusion matrix after training')
+    plot_cm = bool_input('Plot a confusion matrix after training?')
     batch_size = int_input('batch size (suggested: 8)', 1, 64)
     learning_rate = float_input('learning rate (suggested: 0.001)', 0, 1)
     learning_rate_decay = float_input('learning decay rate (suggested: 0.000001)', 0, 1)
     cycle = int_input('number of cycles before resetting the learning rate (suggested: 3)', 1, 10)
-    learning_rate_modifier = int_input('learing rate modifier (suggested: 5)', 1, 100)
     num_rounds = int_input('number of rounds (suggested: 3)', 1, 100)
     print('Select image resolution:')
-    print('[0] low (224 px)')
-    print('[1] mid (448 px)')
-    print('[2] high (896 px)')
+    print('[0] low (' + str(img_dim) + ' px)')
+    print('[1] mid (' + str(img_dim * 2) + ' px)')
+    print('[2] high (' + str(img_dim * 4) + ' px)')
     img_resolution_index = int_input('choice', 0, 2, show_range = False)
     if img_resolution_index == 0:
         img_size = 1
@@ -81,12 +94,15 @@ def configure():
                'cycle': cycle,
                'seed': np.random.randint(9999),
                'batch_size': batch_size,
-               'resnet_learning_rate': learning_rate,
-               'resnet_learning_rate_decay': learning_rate_decay,
-               'resnet_learning_rate_modifier': learning_rate_modifier,
+               'learning_rate': learning_rate,
+               'learning_rate_decay': learning_rate_decay,
+               'final_cutoff': final_cutoff,
                'rounds': num_rounds,
                'img_size': img_size,
                'augmentations': augmentations,
+               'architecture': arch,
+               'img_dim': img_dim,
+               'conv_dim': conv_dim,
                'is_split': False,
                'is_array': False,
                'is_augmented': False,
@@ -94,8 +110,8 @@ def configure():
                'is_final': False,
                'model_round': 0,
                'server_weights': None,
-               'resnet_last_weights': None,
-               'resnet_best_weights': None}
+               'last_weights': None,
+               'best_weights': None}
 
     config.append(project)
     store_config(config)
@@ -347,6 +363,9 @@ def export_config(config, weights, ind = None):
     project = {'name': config['name'],
                'api_port': config['api_port'],
                'img_size': config['img_size'],
+               'img_dim': config['img_dim'],
+               'conv_dim': config['conv_dim'],
+               'architecture': config['architecture'],
                'number_categories': config['number_categories'],
                'categories': config['categories'],
                'augmentations': config['augmentations'],

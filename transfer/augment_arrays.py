@@ -68,7 +68,8 @@ def augment_arrays(project):
         print('Generating image augmentations:')
 
         for img_idx, (array, label, label_name) in tqdm(enumerate(gen_arrays_from_dir(array_path))):
-            for aug_idx, (array_aug, label_aug) in enumerate(gen_augment_arrays(array, label, project['augmentations'], project['category_rounds'][label_name.split('-')[2]])):
+            split_label_name = '-'.join(label_name.split('-')[2:-1])
+            for aug_idx, (array_aug, label_aug) in enumerate(gen_augment_arrays(array, label, project['augmentations'], project['category_rounds'][split_label_name])):
                 cat_idx = np.argmax(label_aug)
                 cat = project['categories'][cat_idx]
                 img_name = '{}-{:02d}-img-{}-{}'.format(img_idx, aug_idx,

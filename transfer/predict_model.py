@@ -8,6 +8,7 @@ from keras.models import Model
 from keras.preprocessing.image import load_img
 from keras.applications.resnet50 import preprocess_input as resnet_preprocess_input
 from keras.applications.xception import preprocess_input as xception_preprocess_input
+from keras.applications.vgg16 import preprocess_input as vgg16_preprocess_input
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import pandas as pd
@@ -18,6 +19,7 @@ from termcolor import colored
 
 from transfer.resnet50 import get_resnet_final_model
 from transfer.xception import get_xception_final_model
+from transfer.vgg16 import get_vgg16_final_model
 from transfer.augment_arrays import gen_augment_arrays
 
 
@@ -40,8 +42,10 @@ def multi_predict(aug_gen, models, architecture):
     for img, _ in aug_gen:
         if architecture == 'resnet50':
             img = resnet_preprocess_input(img[np.newaxis].astype(np.float32))
-        else:
+        elif architecture == 'xception':
             img = xception_preprocess_input(img[np.newaxis].astype(np.float32))
+        else:
+            img = vgg16_preprocess_input(img[np.newaxis].astype(np.float32))
         for model in models:
             predicted.append(model.predict(img))
     predicted = np.array(predicted).sum(axis=0)
@@ -56,8 +60,10 @@ def predict_model(project, weights, user_files):
     for weight in project[weights]:
         if project['architecture'] == 'resnet50':
             models.append(get_resnet_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
-        else:
+        elif project['architecture'] == 'xception':
             models.append(get_xception_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
+        else:
+            models.append(get_vgg16_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
 
     output = []
     user_files = os.path.expanduser(user_files)

@@ -9,6 +9,7 @@ import numpy as np
 
 from transfer.resnet50 import get_resnet_final_model
 from transfer.xception import get_xception_final_model
+from transfer.vgg16 import get_vgg16_final_model
 from transfer.predict_model import prep_from_image, gen_from_directory, multi_predict
 
 def start_server(project, weights):
@@ -25,8 +26,10 @@ def start_server(project, weights):
     for weight in project[weights]:
         if project['architecture'] == 'resnet50':
             models.append(get_resnet_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
-        else:
+        elif project['architecture'] == 'xception':
             models.append(get_xception_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
+        else:
+            models.append(get_vgg16_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
 
     class Predict(Resource):
         def post(self):

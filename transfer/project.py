@@ -46,16 +46,22 @@ def configure():
     print('Select architecture:')
     print('[0] resnet50')
     print('[1] xception')
-    architecture = int_input('choice', 0, 1, show_range = False)
+    print('[2] vgg16')
+    architecture = int_input('choice', 0, 2, show_range = False)
     if architecture == 0:
         arch = 'resnet50'
         img_dim = 224
         conv_dim = 7
         final_cutoff = 80
-    else:
+    elif architecture == 1:
         arch = 'xception'
         img_dim = 299
         conv_dim = 10
+        final_cutoff = 80
+    else:
+        arch = 'vgg16'
+        img_dim = 224
+        conv_dim = 7
         final_cutoff = 80
     api_port = int_input('port for local prediction API (suggested: 5000)', 1024, 49151)
     kfold = int_input('number of folds to use (suggested: 5)', 3, 10)

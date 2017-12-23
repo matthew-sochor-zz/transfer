@@ -61,7 +61,7 @@ def configure():
     else:
         arch = 'vgg16'
         img_dim = 224
-        conv_dim = 7
+        conv_dim = 14
         final_cutoff = 80
     api_port = int_input('port for local prediction API (suggested: 5000)', 1024, 49151)
     kfold = int_input('number of folds to use (suggested: 5)', 3, 10)

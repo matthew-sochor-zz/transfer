@@ -47,7 +47,7 @@ def get_vgg16_pre_post_model(img_dim, conv_dim, number_categories, model_weights
 
     popped, pre_model = get_vgg16_pre_model(img_dim)
 
-    input_dims = (conv_dim, conv_dim, 1024)
+    input_dims = (conv_dim, conv_dim, 512)
     # Take last 8 layers from vgg16 with their starting weights!
     x_in = Input(shape = input_dims)
     x = popped[7](x_in)

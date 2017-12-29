@@ -4,12 +4,12 @@ from subprocess import call
 import numpy as np
 from keras.applications.resnet50 import preprocess_input as resnet_preprocess_input
 from keras.applications.xception import preprocess_input as xception_preprocess_input
-from keras.applications.vgg16 import preprocess_input as vgg16_preprocess_input
+from keras.applications.inception_v3 import preprocess_input as inception_v3_preprocess_input
 from tqdm import tqdm
 
 from transfer.resnet50 import get_resnet_pre_model
 from transfer.xception import get_xception_pre_model
-from transfer.vgg16 import get_vgg16_pre_model
+from transfer.inception_v3 import get_inception_v3_pre_model
 
 def gen_array_from_dir(array_dir):
     array_files = sorted(os.listdir(array_dir))
@@ -47,7 +47,7 @@ def val_pre_model(source_path, folder, img_dim, architechture):
     elif architechture == 'xception':
         popped, pre_model = get_xception_pre_model(img_dim)
     else:
-        popped, pre_model = get_vgg16_pre_model(img_dim)
+        popped, pre_model = get_inception_v3_pre_model(img_dim)
 
     for (array, label, array_name, label_name) in tqdm(gen_array_from_dir(array_path)):
         if architechture == 'resnet50':
@@ -55,7 +55,7 @@ def val_pre_model(source_path, folder, img_dim, architechture):
         elif architechture == 'xception':
             array = xception_preprocess_input(array[np.newaxis].astype(np.float32))
         else:
-            array = vgg16_preprocess_input(array[np.newaxis].astype(np.float32))
+            array = inception_v3_preprocess_input(array[np.newaxis].astype(np.float32))
         array_pre_model = np.squeeze(pre_model.predict(array, batch_size=1))
 
         array_name = array_name.split('.')[0]

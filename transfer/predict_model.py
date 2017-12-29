@@ -8,7 +8,7 @@ from keras.models import Model
 from keras.preprocessing.image import load_img
 from keras.applications.resnet50 import preprocess_input as resnet_preprocess_input
 from keras.applications.xception import preprocess_input as xception_preprocess_input
-from keras.applications.vgg16 import preprocess_input as vgg16_preprocess_input
+from keras.applications.inception_v3 import preprocess_input as inception_v3_preprocess_input
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import pandas as pd
@@ -19,7 +19,7 @@ from termcolor import colored
 
 from transfer.resnet50 import get_resnet_final_model
 from transfer.xception import get_xception_final_model
-from transfer.vgg16 import get_vgg16_final_model
+from transfer.inception_v3 import get_inception_v3_final_model
 from transfer.augment_arrays import gen_augment_arrays
 
 
@@ -45,7 +45,7 @@ def multi_predict(aug_gen, models, architecture):
         elif architecture == 'xception':
             img = xception_preprocess_input(img[np.newaxis].astype(np.float32))
         else:
-            img = vgg16_preprocess_input(img[np.newaxis].astype(np.float32))
+            img = inception_v3_preprocess_input(img[np.newaxis].astype(np.float32))
         for model in models:
             predicted.append(model.predict(img))
     predicted = np.array(predicted).sum(axis=0)
@@ -63,7 +63,7 @@ def predict_model(project, weights, user_files):
         elif project['architecture'] == 'xception':
             models.append(get_xception_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
         else:
-            models.append(get_vgg16_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
+            models.append(get_inception_v3_final_model(img_dim, conv_dim, project['number_categories'], weight, project['is_final']))
 
     output = []
     user_files = os.path.expanduser(user_files)

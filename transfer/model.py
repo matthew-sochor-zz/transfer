@@ -7,7 +7,7 @@ from keras.callbacks import ModelCheckpoint
 from keras.preprocessing.image import load_img
 from keras.applications.resnet50 import preprocess_input as resnet_preprocess_input
 from keras.applications.xception import preprocess_input as xception_preprocess_input
-from keras.applications.vgg16 import preprocess_input as vgg_preprocess_input
+from keras.applications.inception_v3 import preprocess_input as vgg_preprocess_input
 from keras import layers
 import pandas as pd
 from tqdm import tqdm
@@ -20,7 +20,7 @@ from termcolor import colored
 
 from transfer.resnet50 import get_resnet_pre_post_model, get_resnet_final_model
 from transfer.xception import get_xception_pre_post_model, get_xception_final_model
-from transfer.vgg16 import get_vgg16_pre_post_model, get_vgg16_final_model
+from transfer.inception_v3 import get_inception_v3_pre_post_model, get_inception_v3_final_model
 
 def gen_minibatches(array_dir, array_names, batch_size, architecture, final = False):
 
@@ -42,7 +42,7 @@ def gen_minibatches(array_dir, array_names, batch_size, architecture, final = Fa
                 elif architecture == 'xception':
                     array = np.squeeze(xception_preprocess_input(array[np.newaxis].astype(np.float32)))
                 else:
-                    array = np.squeeze(vgg16_preprocess_input(array[np.newaxis].astype(np.float32)))
+                    array = np.squeeze(inception_v3_preprocess_input(array[np.newaxis].astype(np.float32)))
 
             arrays.append(array)
             labels.append(np.load(img_path.replace('-img-','-label-')))
@@ -132,7 +132,7 @@ def train_model(project, final = False, last = False):
             elif project['architecture'] == 'xception':
                 model = get_xception_final_model(img_dim, conv_dim, project['number_categories'], fold_weights, project['is_final'])
             else:
-                model = get_vgg16_final_model(img_dim, conv_dim, project['number_categories'], fold_weights, project['is_final'])
+                model = get_inception_v3_final_model(img_dim, conv_dim, project['number_categories'], fold_weights, project['is_final'])
 
             for i, layer in enumerate(model.layers[1].layers):
                 if len(layer.trainable_weights) > 0:
@@ -154,7 +154,7 @@ def train_model(project, final = False, last = False):
                                                     len(project['categories']),
                                                     model_weights = fold_weights)
             else:
-                pre_model, model = get_vgg16_pre_post_model(img_dim,
+                pre_model, model = get_inception_v3_pre_post_model(img_dim,
                                                     conv_dim,
                                                     len(project['categories']),
                                                     model_weights = fold_weights)
@@ -244,7 +244,7 @@ def train_model(project, final = False, last = False):
                     elif project['architecture'] == 'xception':
                         img = np.squeeze(xception_preprocess_input(img[np.newaxis].astype(np.float32)))
                     else:
-                        img = np.squeeze(vgg16_preprocess_input(img[np.newaxis].astype(np.float32)))
+                        img = np.squeeze(inception_v3_preprocess_input(img[np.newaxis].astype(np.float32)))
                 prediction = model.predict(img[np.newaxis])
                 best_predictions.append(project['categories'][np.argmax(prediction)])
                 true_label = np.load(img_path.replace('-img-','-label-'))

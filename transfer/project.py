@@ -46,7 +46,7 @@ def configure():
     print('Select architecture:')
     print('[0] resnet50')
     print('[1] xception')
-    print('[2] vgg16')
+    print('[2] inception_v3')
     architecture = int_input('choice', 0, 2, show_range = False)
     if architecture == 0:
         arch = 'resnet50'
@@ -59,9 +59,9 @@ def configure():
         conv_dim = 10
         final_cutoff = 80
     else:
-        arch = 'vgg16'
-        img_dim = 224
-        conv_dim = 14
+        arch = 'inception_v3'
+        img_dim = 299
+        conv_dim = 8
         final_cutoff = 80
     api_port = int_input('port for local prediction API (suggested: 5000)', 1024, 49151)
     kfold = int_input('number of folds to use (suggested: 5)', 3, 10)

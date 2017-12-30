@@ -212,7 +212,8 @@ def select_augmentations():
     width_shift_range = float_input('width_shift_range: fraction of total width.', 0., 1.)
     height_shift_range = float_input('height_shift_range: fraction of total width.', 0., 1.)
     shear_range = float_input('shear_range: shear intensity (shear angle in radians)', 0., np.pi/2)
-    zoom_range = float_input('zoom_range: amount of zoom. Zoom will be randomly picked in the range [1-z, 1+z].', 0., 1.)
+    zoom_range_in = float_input('zoom_range: amount of zoom in. 1.0 is no zoom, 0 is full zoom.', 0., 1.)
+    zoom_range_out = float_input('zoom_range: amount of zoom out. 1.0 is no zoom, 0 is full zoom ', 0., 1.)
     channel_shift_range = float_input('channel_shift_rangee: shift range for each channels.', 0., 1.)
     print('fill_mode: points outside the boundaries are filled according to the given mode.')
     fill_mode = str_input('constant, nearest, reflect, or wrap. Default nearest: ',['constant', 'nearest', 'reflect', 'wrap'])
@@ -236,7 +237,7 @@ def select_augmentations():
                      'width_shift_range': width_shift_range,
                      'height_shift_range': height_shift_range,
                      'shear_range': shear_range,
-                     'zoom_range': zoom_range,
+                     'zoom_range': [zoom_range_in, zoom_range_out],
                      'channel_shift_range': channel_shift_range,
                      'fill_mode': fill_mode,
                      'cval': cval,

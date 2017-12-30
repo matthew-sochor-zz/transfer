@@ -48,5 +48,5 @@ def val_images_to_array(img_path, source_path, img_dim, categories):
             np.save(img_label_path, label)
     category_lengths = np.array(category_lengths) / sum(category_lengths)
     category_lengths = list(category_lengths / max(category_lengths))
-    category_rounds = {cat: int(np.round(1 / l)) for cat, l in zip(categories, category_lengths)}
+    category_rounds = {cat: min(int(np.round(1 / l)), 10) for cat, l in zip(categories, category_lengths)}
     return category_rounds

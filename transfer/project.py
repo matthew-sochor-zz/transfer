@@ -315,7 +315,7 @@ def read_imported_config(import_path, project_name, projects = None):
 
 def import_config(config_file):
     config_file = os.path.expanduser(config_file)
-    transfer_path = os.path.expanduser(os.path.join('~/.transfer'))
+    transfer_path = os.path.expanduser(os.path.join('~','.transfer'))
     import_path = os.path.join(transfer_path, 'import')
     call(['rm', '-rf', import_path])
     call(['mkdir','-p', import_path])
@@ -353,7 +353,7 @@ def import_config(config_file):
 
 
 def export_config(config, weights, ind = None):
-    export_path = os.path.expanduser(os.path.join('~/.transfer/export', config['name']))
+    export_path = os.path.expanduser(os.path.join('~','.transfer','export', config['name']))
     if ind is None:
         export_tar = export_path + '_' + weights + '.tar.gz'
     else:
@@ -379,7 +379,7 @@ def export_config(config, weights, ind = None):
                'is_final': config['is_final'],
                'server_weights': server_weights}
     store_config(project, suffix = os.path.join('export', config['name']))
-    call(['tar', '-zcvf', export_tar, '-C', os.path.expanduser('~/.transfer/export'), config['name']])
+    call(['tar', '-zcvf', export_tar, '-C', os.path.expanduser('~','.transfer','export'), config['name']])
     call(['rm','-rf', export_path])
     print('Project successfully exported, please save the following file for re-import to transfer')
     print('')

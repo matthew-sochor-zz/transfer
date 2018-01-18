@@ -56,6 +56,17 @@ Want to re-fine your model with subsequent runs?  Go ahead by simply running aga
 
 `transfer -r`
 
+## Import 
+
+`-i IMPORT_CONFIG`
+
+or
+
+`--import IMPORT_CONFIG`,
+
+where IMPORT_CONFIG is the path to tar.gz file where the config.yaml and model files are. 
+You can use ~/ or ~\ shortcut and it should be interpreted correctly.
+
 ## Predict on an image or directory
 
 `transfer --predict`

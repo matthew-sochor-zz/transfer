@@ -56,7 +56,7 @@ Want to re-fine your model with subsequent runs?  Go ahead by simply running aga
 
 `transfer -r`
 
-## Import 
+## Import model for use in predicting
 
 `-i IMPORT_CONFIG`
 

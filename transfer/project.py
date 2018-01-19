@@ -379,7 +379,7 @@ def export_config(config, weights, ind = None):
                'is_final': config['is_final'],
                'server_weights': server_weights}
     store_config(project, suffix = os.path.join('export', config['name']))
-    call(['tar', '-zcvf', export_tar, '-C', os.path.expanduser('~','.transfer','export'), config['name']])
+    call(['tar', '-zcvf', export_tar, '-C', os.path.expanduser(os.path.join('~','.transfer','export')), config['name']])
     call(['rm','-rf', export_path])
     print('Project successfully exported, please save the following file for re-import to transfer')
     print('')

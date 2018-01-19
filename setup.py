@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="transfer",
-    version="0.28",
+    version="0.29",
     description="Transfer learning for deep image classification",
     packages=find_packages(),
 
@@ -20,6 +20,7 @@ setup(
                       'flask_jsonpify',
                       'flask_restful',
                       'matplotlib',
+                      'scikit-learn',
                       'seaborn'],
     python_requires='>=3',
 

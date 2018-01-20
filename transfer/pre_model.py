@@ -1,4 +1,5 @@
 import os
+import shutil
 from subprocess import call
 
 import numpy as np
@@ -39,8 +40,10 @@ def val_pre_model(source_path, folder, img_dim, architechture):
 
     array_path = os.path.join(source_path, folder)
     pre_model_path = os.path.join(source_path, 'pre_model')
-    call(['rm', '-rf', pre_model_path])
-    call(['mkdir', '-p', pre_model_path])
+#    call(['rm', '-rf', pre_model_path])
+    shutil.rmtree(pre_model_path,ignore_errors=T)
+#    call(['mkdir', '-p', pre_model_path])
+    os.makedirs(pre_model_path)
 
     if architechture == 'resnet50':
         popped, pre_model = get_resnet_pre_model(img_dim)

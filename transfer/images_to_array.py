@@ -1,4 +1,5 @@
 import os
+import shutil
 from subprocess import call
 
 from tqdm import tqdm
@@ -22,8 +23,10 @@ def images_to_array(project):
 def val_images_to_array(img_path, source_path, img_dim, categories):
 
     array_path = os.path.join(source_path, 'array')
-    call(['rm', '-rf', array_path])
-    call(['mkdir', '-p', array_path])
+#    call(['rm', '-rf', array_path])
+    shutil.rmtree(array_path,ignore_errors=T)
+#    call(['mkdir', '-p', array_path])
+    os.makedirs(array_path)
 
     print('Iterating over all categories: ', categories)
     category_lengths = []

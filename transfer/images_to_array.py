@@ -24,7 +24,7 @@ def val_images_to_array(img_path, source_path, img_dim, categories):
 
     array_path = os.path.join(source_path, 'array')
 #    call(['rm', '-rf', array_path])
-    shutil.rmtree(array_path,ignore_errors=T)
+    shutil.rmtree(array_path,ignore_errors=True)
 #    call(['mkdir', '-p', array_path])
     os.makedirs(array_path)
 

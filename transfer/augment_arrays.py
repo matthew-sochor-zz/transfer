@@ -57,7 +57,7 @@ def augment_arrays(project):
     array_path = os.path.join(project['path'], 'array')
     augmented_path = os.path.join(project['path'], 'augmented')
 #    call(['rm', '-rf', augmented_path])
-    shutil.rmtree(augmented_path,ignore_errors=T)
+    shutil.rmtree(augmented_path,ignore_errors=True)
 #    call(['mkdir', '-p', augmented_path])
     os.makedirs(augmented_path)
 

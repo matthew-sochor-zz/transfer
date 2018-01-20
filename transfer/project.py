@@ -321,7 +321,7 @@ def import_config(config_file):
     transfer_path = os.path.expanduser(os.path.join('~','.transfer'))
     import_path = os.path.join(transfer_path, 'import')
 #    call(['rm', '-rf', import_path])
-    shutil.rmtree(import_path,ignore_errors=T)
+    shutil.rmtree(import_path,ignore_errors=True)
 #    call(['mkdir','-p', import_path])
     os.makedirs(import_path)
 
@@ -396,7 +396,7 @@ def export_config(config, weights, ind = None):
     tf.add(os.path.expanduser('~','.transfer','export'),config['name'])
     tf.close()
 #    call(['rm','-rf', export_path])
-    shutil.rmtree(export_path,ignore_errors=T)
+    shutil.rmtree(export_path,ignore_errors=True)
     print('Project successfully exported, please save the following file for re-import to transfer')
     print('')
     print(colored(export_tar, 'green'))

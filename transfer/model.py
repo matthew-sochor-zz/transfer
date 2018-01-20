@@ -73,7 +73,7 @@ def train_model(project, final = False, last = False):
 
     project['model_round'] += 1
 #    call(['mkdir', '-p', weights_path])
-    shutil.rmtree(weights_path,ignore_errors=T)
+    shutil.rmtree(weights_path,ignore_errors=True)
 #    call(['mkdir', '-p', plot_path])
     os.makedirs(plot_path)
 

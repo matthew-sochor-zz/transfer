@@ -317,7 +317,6 @@ def import_config(config_file):
     config_file = os.path.expanduser(config_file)
     transfer_path = os.path.expanduser(os.path.join('~','.transfer'))
     import_path = os.path.join(transfer_path, 'import')
-    call(['rm', '-rf', import_path])
     call(['mkdir','-p', import_path])
 
     if os.path.isfile(config_file) == False:

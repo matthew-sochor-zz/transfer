@@ -325,7 +325,6 @@ def import_config(config_file):
 #    call(['mkdir','-p', import_path])
     os.makedirs(import_path)
 
-
     if os.path.isfile(config_file) == False:
         print('This is not a file:', colored(config_file, 'red'))
         return

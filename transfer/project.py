@@ -329,8 +329,9 @@ def import_config(config_file):
     project_path = os.path.join(transfer_path, 'import', project_name)
     call(['mkdir','-p', project_path])
 
-    call(['mv', os.path.join(import_temp_path, project_name, '*'), project_path])
-    call(['rm', '-rf', import_temp_path])
+    call(['mv', os.path.join(import_temp_path, project_name), os.path.join(transfer_path, 'import')])
+
+    #call(['rm', '-rf', import_temp_path])
     print('Imported project:', colored(project_name, 'magenta'))
     if os.path.isfile(os.path.join(transfer_path, 'config.yaml')):
         with open(os.path.join(transfer_path, 'config.yaml'), 'r') as fp:

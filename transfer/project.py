@@ -287,11 +287,10 @@ def select_project(user_provided_project):
     return project
 
 
-def read_imported_config(import_path, project_name, projects = None):
+def read_imported_config(project_path, project_name, projects = None):
 
     # Oh god this logic is a disaster, user interfaces are hard
     unique_name = False
-    project_path = os.path.join(import_path, project_name)
     while unique_name == False:
         unique_name = True
         if projects is not None:
@@ -316,29 +315,36 @@ def read_imported_config(import_path, project_name, projects = None):
 def import_config(config_file):
     config_file = os.path.expanduser(config_file)
     transfer_path = os.path.expanduser(os.path.join('~','.transfer'))
-    import_path = os.path.join(transfer_path, 'import')
-    call(['mkdir','-p', import_path])
+    import_temp_path = os.path.join(transfer_path, 'import-temp')
+    call(['rm', '-rf', import_temp_path])
+    call(['mkdir','-p', import_temp_path])
 
     if os.path.isfile(config_file) == False:
         print('This is not a file:', colored(config_file, 'red'))
         return
 
-    call(['tar', '-zxvf', config_file, '-C', import_path])
-    project_name = os.listdir(import_path)[0]
+    call(['tar', '-zxvf', config_file, '-C', import_temp_path])
+    project_name = os.listdir(import_temp_path)[0]
+
+    project_path = os.path.join(transfer_path, 'import', project_name)
+    call(['mkdir','-p', project_path])
+
+    call(['cp', '-r', os.path.join(import_temp_path, project_name), project_path])
+    call(['rm', '-rf', import_temp_path])
     print('Imported project:', colored(project_name, 'magenta'))
     if os.path.isfile(os.path.join(transfer_path, 'config.yaml')):
         with open(os.path.join(transfer_path, 'config.yaml'), 'r') as fp:
             projects = yaml.load(fp.read())
 
-        import_project = read_imported_config(import_path, project_name, projects)
+        import_project = read_imported_config(project_path, project_name, projects)
 
         projects.append(import_project)
         store_config(projects)
 
     else:
-        call(['cp', os.path.join(import_path, project_name, 'config.yaml'), os.path.join(transfer_path, 'config.yaml')])
-        print(os.listdir(import_path))
-        import_project = read_imported_config(import_path, project_name)
+        call(['cp', os.path.join(project_path, 'config.yaml'), os.path.join(transfer_path, 'config.yaml')])
+
+        import_project = read_imported_config(project_path, project_name)
         store_config([import_project])
 
     print('Project successfully imported!')

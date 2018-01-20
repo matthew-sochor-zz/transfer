@@ -331,7 +331,7 @@ def import_config(config_file):
         return
 
 #    call(['tar', '-zxvf', config_file, '-C', import_path])
-    tf=tarfile.open(config_file,mode=r:gz)
+    tf=tarfile.open(config_file,mode="r:gz")
     tf.extractall(path=import_path)
     tf.close()
     project_name = os.listdir(import_path)[0]
@@ -393,7 +393,7 @@ def export_config(config, weights, ind = None):
                'server_weights': server_weights}
     store_config(project, suffix = os.path.join('export', config['name']))
 #    call(['tar', '-zcvf', export_tar, '-C', os.path.expanduser('~','.transfer','export'), config['name']])
-    tf=tarfile.open(export_tar,mode=w:gz)
+    tf=tarfile.open(export_tar,mode="w:gz")
     tf.add(os.path.expanduser('~','.transfer','export'),config['name'])
     tf.close()
 #    call(['rm','-rf', export_path])

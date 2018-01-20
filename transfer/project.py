@@ -416,7 +416,7 @@ def store_config(config, suffix = None):
         config_path = os.path.join(home, '.transfer')
 
 #    call(['mkdir', '-p', config_path])
-    os.makedirs(config_path,exists_ok=True)
+    os.makedirs(config_path,exist_ok=True)
     with open(os.path.join(config_path, 'config.yaml'), 'w') as fp:
         yaml.dump(config, fp)
 

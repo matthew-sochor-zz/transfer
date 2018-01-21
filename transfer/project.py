@@ -289,11 +289,10 @@ def select_project(user_provided_project):
     return project
 
 
-def read_imported_config(import_path, project_name, projects = None):
+def read_imported_config(project_path, project_name, projects = None):
 
     # Oh god this logic is a disaster, user interfaces are hard
     unique_name = False
-    project_path = os.path.join(import_path, project_name)
     while unique_name == False:
         unique_name = True
         if projects is not None:
@@ -319,36 +318,64 @@ def read_imported_config(import_path, project_name, projects = None):
 def import_config(config_file):
     config_file = os.path.expanduser(config_file)
     transfer_path = os.path.expanduser(os.path.join('~','.transfer'))
-    import_path = os.path.join(transfer_path, 'import')
+    #import_path = os.path.join(transfer_path, 'import')
 #    call(['rm', '-rf', import_path])
-    shutil.rmtree(import_path,ignore_errors=True)
-#    call(['mkdir','-p', import_path])
-    os.makedirs(import_path)
+    #shutil.rmtree(import_path,ignore_errors=True)
+    #    call(['mkdir','-p', import_path])
+    #os.makedirs(import_path)
+    import_temp_path = os.path.join(transfer_path, 'import-temp')
+    shutil.rmtree(import_temp_path, ignore_errors = True)
+    #call(['rm', '-rf', import_temp_path])
+    #call(['mkdir','-p', import_temp_path])
+    os.makedirs(import_temp_path)
 
     if os.path.isfile(config_file) == False:
         print('This is not a file:', colored(config_file, 'red'))
         return
 
-#    call(['tar', '-zxvf', config_file, '-C', import_path])
-    tf=tarfile.open(config_file,mode="r:gz")
-    tf.extractall(path=import_path)
+    #    call(['tar', '-zxvf', config_file, '-C', import_path])
+    #tf=tarfile.open(config_file,mode="r:gz")
+    #tf.extractall(path=import_path)
+    #tf.close()
+    #project_name = os.listdir(import_path)[0]
+    #call(['tar', '-zxvf', config_file, '-C', import_temp_path])
+    tf = tarfile.open(config_file, mode = "r:gz")
+    tf.extractall(path = import_temp_path)
     tf.close()
-    project_name = os.listdir(import_path)[0]
+    for listed in os.listdir(import_temp_path):
+        if os.path.isdir(listed):
+            project_name = listed
+    #project_name = os.listdir(import_temp_path)[0]
+
+    project_path = os.path.join(transfer_path, 'import', project_name)
+    #call(['mkdir','-p', project_path])
+    os.makedirs(project_path)
+
+    #call(['mv', os.path.join(import_temp_path, project_name), os.path.join(transfer_path, 'import')])
+    shutil.move(os.path.join(import_temp_path, project_name), os.path.join(transfer_path, 'import'))
+        
+    #call(['rm', '-rf', import_temp_path])
     print('Imported project:', colored(project_name, 'magenta'))
     if os.path.isfile(os.path.join(transfer_path, 'config.yaml')):
         with open(os.path.join(transfer_path, 'config.yaml'), 'r') as fp:
             projects = yaml.load(fp.read())
 
-        import_project = read_imported_config(import_path, project_name, projects)
+        import_project = read_imported_config(project_path, project_name, projects)
 
         projects.append(import_project)
         store_config(projects)
 
     else:
 #        call(['cp', os.path.join(import_path, project_name, 'config.yaml'), os.path.join(transfer_path, 'config.yaml')])
-        shutil.copy(os.path.join(import_path, project_name, 'config.yaml'),os.path.join(transfer_path, 'config.yaml'))
-        print(os.listdir(import_path))
-        import_project = read_imported_config(import_path, project_name)
+        #shutil.copy(os.path.join(import_path, project_name, 'config.yaml'),os.path.join(transfer_path, 'config.yaml'))
+        #print(os.listdir(import_path))
+        #import_project = read_imported_config(import_path, project_name)
+
+        #call(['cp', os.path.join(project_path, 'config.yaml'), os.path.join(transfer_path, 'config.yaml')])
+        shutil.copy(os.path.join(project_path, 'config.yaml'), os.path.join(transfer_path, 'config.yaml'))
+        
+        import_project = read_imported_config(project_path, project_name)
+
         store_config([import_project])
 
     print('Project successfully imported!')
@@ -392,11 +419,11 @@ def export_config(config, weights, ind = None):
                'server_weights': server_weights}
     store_config(project, suffix = os.path.join('export', config['name']))
 #    call(['tar', '-zcvf', export_tar, '-C', os.path.expanduser('~','.transfer','export'), config['name']])
-    tf=tarfile.open(export_tar,mode="w:gz")
-    tf.add(os.path.expanduser('~','.transfer','export'),config['name'])
+    tf = tarfile.open(export_tar, mode = "w:gz")
+    tf.add(os.path.expanduser('~', '.transfer', 'export'), config['name'])
     tf.close()
 #    call(['rm','-rf', export_path])
-    shutil.rmtree(export_path,ignore_errors=True)
+    shutil.rmtree(export_path, ignore_errors = True)
     print('Project successfully exported, please save the following file for re-import to transfer')
     print('')
     print(colored(export_tar, 'green'))
@@ -416,7 +443,7 @@ def store_config(config, suffix = None):
         config_path = os.path.join(home, '.transfer')
 
 #    call(['mkdir', '-p', config_path])
-    os.makedirs(config_path,exist_ok=True)
+    os.makedirs(config_path, exist_ok = True)
     with open(os.path.join(config_path, 'config.yaml'), 'w') as fp:
         yaml.dump(config, fp)
 

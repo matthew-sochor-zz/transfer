@@ -96,7 +96,6 @@ def get_inception_v3_pre_post_model(img_dim, conv_dim, number_categories, model_
     x = Dense(number_categories, activation='softmax', name='predictions')(x)
 
     post_model = Model(mixed_9, x)
-    print(post_model.summary())
     if model_weights is not None:
         print('Loading model weights:', model_weights)
         post_model.load_weights(model_weights)

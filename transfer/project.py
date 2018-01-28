@@ -1,7 +1,6 @@
 import os
 import shutil
 import tarfile
-from subprocess import call
 
 import yaml
 import numpy as np

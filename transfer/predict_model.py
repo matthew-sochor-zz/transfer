@@ -1,5 +1,4 @@
 import os
-from subprocess import call
 
 import numpy as np
 from keras.layers import Input
@@ -91,6 +90,7 @@ def predict_model(project, weights, user_files):
             old_pred_df = pd.read_csv(predictions_file)
             pred_df = pd.concat([pred_df, old_pred_df])
 
+        os.makedirs(project['path'], exist_ok = True)
         pred_df.to_csv(predictions_file, index = False)
         print('Predictions saved to:', colored(predictions_file, 'cyan'))
 

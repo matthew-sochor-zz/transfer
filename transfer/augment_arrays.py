@@ -1,6 +1,5 @@
 import os
 import shutil
-from subprocess import call
 
 from tqdm import tqdm
 import numpy as np
@@ -56,16 +55,13 @@ def augment_arrays(project):
 
     array_path = os.path.join(project['path'], 'array')
     augmented_path = os.path.join(project['path'], 'augmented')
-#    call(['rm', '-rf', augmented_path])
     shutil.rmtree(augmented_path,ignore_errors=True)
-#    call(['mkdir', '-p', augmented_path])
     os.makedirs(augmented_path)
 
     if project['augmentations'] is None:
         print('No augmentations selected: copying train arrays as is.')
         files = os.listdir(array_path)
         for file in tqdm(files):
-#            call(['cp', os.path.join(array_path, file), augmented_path])
             shutil.copy(os.path.join(array_path, file),augmented_path)
 
     else:

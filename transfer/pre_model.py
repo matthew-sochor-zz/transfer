@@ -1,6 +1,5 @@
 import os
 import shutil
-from subprocess import call
 
 import numpy as np
 from keras.applications.resnet50 import preprocess_input as resnet_preprocess_input
@@ -40,9 +39,7 @@ def val_pre_model(source_path, folder, img_dim, architechture):
 
     array_path = os.path.join(source_path, folder)
     pre_model_path = os.path.join(source_path, 'pre_model')
-#    call(['rm', '-rf', pre_model_path])
     shutil.rmtree(pre_model_path,ignore_errors=True)
-#    call(['mkdir', '-p', pre_model_path])
     os.makedirs(pre_model_path)
 
     if architechture == 'resnet50':

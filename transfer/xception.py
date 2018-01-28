@@ -1,5 +1,4 @@
 import os
-from subprocess import call
 
 import numpy as np
 from keras.layers import Input, Activation, Conv2D, AveragePooling2D, Flatten, BatchNormalization, Dropout, Dense

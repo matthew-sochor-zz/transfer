@@ -1,6 +1,5 @@
 import os
 import shutil
-from subprocess import call
 
 import numpy as np
 from keras.optimizers import Adam, SGD
@@ -72,9 +71,7 @@ def train_model(project, final = False, last = False):
         use_path = os.path.join(source_path, 'pre_model')
 
     project['model_round'] += 1
-#    call(['mkdir', '-p', weights_path])
     shutil.rmtree(weights_path,ignore_errors=True)
-#    call(['mkdir', '-p', plot_path])
     os.makedirs(plot_path)
 
     img_dim = project['img_dim'] * project['img_size']

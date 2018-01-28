@@ -79,4 +79,4 @@ def start_server(project, weights):
     print('')
     print(colored('curl http://localhost:' + str(project['api_port']) + '/predict -d "img_path=/path/to/your/img_dir" -X POST', 'green'))
     print('')
-    app.run(port = str(project['api_port']))
+    app.run(port = project['api_port'])

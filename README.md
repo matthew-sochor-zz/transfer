@@ -6,6 +6,8 @@ Currently, it will re-learn the resnet50, inception_v3 or xception models pre-tr
 
 Furthermore, it provides a framework to serve your models!  You can export a trained model, import it on another computer later, make local predictions or setup a rest api to make predictions.
 
+[Here are some models I have trained ready for prediction!](mattso.ch/transfer-models)
+
 ## How is this different?  Why transfer?
 
 Transfer pre-calculates and saves the early layer outputs for each model.  It then re-learns the final several layers and just those layers.  This differs from other transfer learning approaches that only learn the very final layer and then relearns every layer in that it is *faster* because it calculates the early layers once and *still very accurate*.  It also has built in support for some machine learning best practices like k-fold validation and ensembling of k-fold models.
@@ -98,6 +100,8 @@ Did your friend send you a donkey-vs-hat model trained with transfer?  Well, how
 `transfer --import IMPORT_CONFIG`
 
 where IMPORT_CONFIG is the path to tar.gz file where the config.yaml and model files are.
+
+[Here are some models I have trained ready for importing!](mattso.ch/transfer-models)
 
 ## Contribute
 

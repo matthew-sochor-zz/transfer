@@ -106,3 +106,7 @@ Did your friend send you a donkey-vs-hat model trained with transfer?  Well, how
 `transfer --import IMPORT_CONFIG`
 
 where IMPORT_CONFIG is the path to tar.gz file where the config.yaml and model files are.
+
+## Contribute
+
+Please, if you use transfer and run into any issues or have suggestions for new features, submit an issue on Github or make a pull request.

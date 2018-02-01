@@ -61,11 +61,7 @@ First configure a project with:
 
 `transfer --configure`
 
-or
-
-`transfer -c`
-
-Follow the prompts to point to your parent image directory (~/donkey-vs-hat/img_data in the above example) and to provide modeling parameters.
+Follow the prompts to point to your parent image directory (`~/donkey-vs-hat` in the above example) and to provide modeling parameters.
 
 You can always see your projects by inspecting the local configuration file:
 
@@ -73,19 +69,15 @@ You can always see your projects by inspecting the local configuration file:
 
 ## Train your models!
 
-Run your project with:
+Train your model with:
 
 `transfer --run`
-
-or
-
-`transfer -r`
 
 ## Predict on an image or directory
 
 Transfer provides two modes to predict your models with, either make local predictions on either a directory or single images with:
 
-`transfer --predict`
+`transfer --predict PATH_TO_IMAGES`
 
 or serve your model via a simple local rest-api:
 

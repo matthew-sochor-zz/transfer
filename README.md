@@ -6,7 +6,7 @@ Currently, it will re-learn the resnet50, inception_v3 or xception models pre-tr
 
 Furthermore, it provides a framework to serve your models!  You can export a trained model, import it on another computer later, make local predictions or setup a rest api to make predictions.
 
-[Here are some models I have trained ready for prediction!](mattso.ch/transfer-models)
+[Here are some models I have trained ready for prediction!](http://www.mattso.ch/transfer-models)
 
 ## How is this different?  Why transfer?
 
@@ -101,7 +101,7 @@ Did your friend send you a donkey-vs-hat model trained with transfer?  Well, how
 
 where IMPORT_CONFIG is the path to tar.gz file where the config.yaml and model files are.
 
-[Here are some models I have trained ready for importing!](mattso.ch/transfer-models)
+[Here are some models I have trained ready for prediction!](http://www.mattso.ch/transfer-models)
 
 ## Contribute
 

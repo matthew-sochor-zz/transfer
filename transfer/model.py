@@ -72,6 +72,8 @@ def train_model(project, final = False, last = False):
 
     project['model_round'] += 1
     shutil.rmtree(weights_path,ignore_errors=True)
+    os.makedirs(weights_path)
+    shutil.rmtree(plot_path,ignore_errors=True)
     os.makedirs(plot_path)
 
     img_dim = project['img_dim'] * project['img_size']

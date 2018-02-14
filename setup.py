@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="transfer",
-    version="0.36",
+    version="0.37",
     description="Transfer learning for deep image classification",
     packages=find_packages(),
 

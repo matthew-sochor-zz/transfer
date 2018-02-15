@@ -32,8 +32,8 @@ def gen_from_directory(directory, img_dim, project):
     file_names = [os.path.join(dp, f) for dp, dn, fn in os.walk(directory) for f in fn]
 
     for file_name in file_names:
-        if ((file_name.find('.jpg') > 0) or (file_name.find('.jpeg') > 0) or (file_name.find('.png') > 0)):
-            yield prep_from_image(os.path.join(directory, file_name), img_dim, project['augmentations']), os.path.join(directory, file_name)
+        if ((file_name.lower().find('.jpg') > 0) or (file_name.lower().find('.jpeg') > 0) or (file_name.lower().find('.png') > 0)):
+            yield prep_from_image(file_name, img_dim, project['augmentations']), file_name
 
 
 def multi_predict(aug_gen, models, architecture):

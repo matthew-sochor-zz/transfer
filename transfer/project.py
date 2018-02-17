@@ -1,6 +1,8 @@
 import os
 import shutil
 import tarfile
+import readline
+import glob
 
 import yaml
 import numpy as np
@@ -10,10 +12,19 @@ from termcolor import colored
 from transfer.input import int_input, float_input, bool_input, str_input
 
 
+class Completer(object):
+    def path_completer(self, text, state):
+        return [os.path.join(x, '') if os.path.isdir(x) else x for x in glob.glob(os.path.expanduser(text) + '*')][state]
+
+
 def configure():
     '''
     Configure the transfer environment and store
     '''
+    completer = Completer()
+    readline.set_completer_delims('\t')
+    readline.parse_and_bind('tab: complete')
+    readline.set_completer(completer.path_completer)
 
     home = os.path.expanduser('~')
     if os.path.isfile(os.path.join(home, '.transfer', 'config.yaml')):

@@ -7,7 +7,7 @@ from keras.callbacks import ModelCheckpoint
 from keras.preprocessing.image import load_img
 from keras.applications.resnet50 import preprocess_input as resnet_preprocess_input
 from keras.applications.xception import preprocess_input as xception_preprocess_input
-from keras.applications.inception_v3 import preprocess_input as vgg_preprocess_input
+from keras.applications.inception_v3 import preprocess_input as inception_v3_preprocess_input
 from keras import layers
 import pandas as pd
 from tqdm import tqdm

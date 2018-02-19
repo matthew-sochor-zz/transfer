@@ -42,7 +42,7 @@ def gen_minibatches(array_dir, array_names, batch_size, architecture, final = Fa
                 elif architecture == 'xception':
                     array = np.squeeze(xception_preprocess_input(array[np.newaxis].astype(np.float32)))
                 else:
-                    array = np.squeeze(inception_v3_preprocess_input(array[np.newaxis].astype(np.float32)))
+                    array = np.squeeze(vgg_preprocess_input(array[np.newaxis].astype(np.float32)))
 
             arrays.append(array)
             labels.append(np.load(img_path.replace('-img-','-label-')))
@@ -246,7 +246,7 @@ def train_model(project, final = False, last = False):
                     elif project['architecture'] == 'xception':
                         img = np.squeeze(xception_preprocess_input(img[np.newaxis].astype(np.float32)))
                     else:
-                        img = np.squeeze(inception_v3_preprocess_input(img[np.newaxis].astype(np.float32)))
+                        img = np.squeeze(vgg_preprocess_input(img[np.newaxis].astype(np.float32)))
                 prediction = model.predict(img[np.newaxis])
                 best_predictions.append(project['categories'][np.argmax(prediction)])
                 true_label = np.load(img_path.replace('-img-','-label-'))

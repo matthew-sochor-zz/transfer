@@ -19,7 +19,7 @@ Finally, transfer is meant to be a model delivery platform as well.  Train a mod
 Transfer can manage multiple models simultaneously via a simple project based organization.
 
 ## What is the community saying
-@thenomemac : **Ya, you could probably code something better for a one off, but why I'm not going ever re-implement sqlite3 either... Just use transfer**
+> ** @thenomemac : You could probably code something better, but why... Just use transfer**
 
 ## Software to pre-install
 

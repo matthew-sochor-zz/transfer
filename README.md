@@ -18,6 +18,10 @@ Finally, transfer is meant to be a model delivery platform as well.  Train a mod
 
 Transfer can manage multiple models simultaneously via a simple project based organization.
 
+## What is the community saying
+- **@thenomemac : You could probably code something better, but why... Just use transfer**
+- **@anonymous : Even I can use this!**
+
 ## Software to pre-install
 
 Please first install [tensorflow](https://www.tensorflow.org/install/) and python 3.  I recommend installing the latest python via [Anaconda](https://anaconda.org/anaconda/python).

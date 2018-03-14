@@ -1,6 +1,8 @@
 import sys
 import argparse
 import os
+import readline
+import glob
 
 import yaml
 from colorama import init
@@ -24,6 +26,11 @@ from transfer.predict_model import predict_model
 from transfer.augment_arrays import augment_arrays
 from transfer.input import model_input, model_individual_input, str_input
 from transfer.server import start_server
+
+
+class Completer(object):
+    def path_completer(self, text, state):
+        return [os.path.join(x, '') if os.path.isdir(x) else x for x in glob.glob(os.path.expanduser(text) + '*')][state]
 
 
 def main(args = None):
@@ -153,6 +160,11 @@ def main(args = None):
             print('')
     elif args.predict is not None:
         if args.predict == 'default':
+
+            completer = Completer()
+            readline.set_completer_delims('\t')
+            readline.parse_and_bind('tab: complete')
+            readline.set_completer(completer.path_completer)
             args.predict = str_input('Enter a path to file(s): ')
         if project['server_weights'] is not None:
             predict_model(project, 'server_weights', args.predict)

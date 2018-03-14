@@ -301,7 +301,22 @@ def select_project(user_provided_project):
 
 def read_imported_config(project_path, project_name, projects = None):
 
+    completer = Completer()
+    readline.set_completer_delims('\t')
+    readline.parse_and_bind('tab: complete')
+    readline.set_completer(completer.path_completer)
+
     # Oh god this logic is a disaster, user interfaces are hard
+    bad_user = True
+    while bad_user:
+        relearn_str = str_input('Do you want to learn on new starting from these weights? (yes or no) ')
+        if relearn_str.lower() == 'yes' or relearn_str.lower() == 'y':
+            bad_user = False
+            relearn = True
+        elif relearn_str.lower() == 'no' or relearn_str.lower() == 'n':
+            bad_user = False
+            relearn = False
+
     unique_name = False
     while unique_name == False:
         unique_name = True
@@ -311,8 +326,18 @@ def read_imported_config(project_path, project_name, projects = None):
                     print(colored('Project with this name already exists.', 'red'))
                     project_name = str_input('Provide a new project name: ')
                     unique_name = False
+    if relearn:
+        image_path = os.path.expanduser(input('Select parent directory for your images: '))
+        path_unset = True
+        while path_unset:
+            project_dest = os.path.expanduser(input('Select destination for your project: '))
+            if (project_dest.find(image_path) == 0):
+                print('Project destination should not be same or within image directory!')
+            else:
+                path_unset = False
+    else:
+        project_dest = os.path.expanduser(input('Select destination for your project: '))
 
-    project_dest = os.path.expanduser(str_input('Provide a path for your predictions to be saved: '))
     if os.path.isdir(project_dest) == False:
         print('Creating directory:', project_dest)
         os.makedirs(project_dest, exist_ok = True)
@@ -320,11 +345,55 @@ def read_imported_config(project_path, project_name, projects = None):
     with open(os.path.join(project_path, 'config.yaml'), 'r') as fp:
         import_project = yaml.load(fp.read())
     import_project['name'] = project_name
-    import_project['server_weights'] = [os.path.join(project_path, weight) for weight in os.listdir(project_path) if weight.find('.hdf5') > 0]
     import_project['path'] = project_dest
+
+    if relearn:
+
+        kfold = int_input('number of folds to use (suggested: 5)', 3, 10)
+        kfold_every = bool_input('Fit a model for every fold? (if false, just fit one)')
+        print('Warning: if working on a remote computer, you may not be able to plot!')
+        plot_cm = bool_input('Plot a confusion matrix after training?')
+        batch_size = int_input('batch size (suggested: 8)', 1, 64)
+        learning_rate = float_input('learning rate (suggested: 0.001)', 0, 1)
+        learning_rate_decay = float_input('learning decay rate (suggested: 0.000001)', 0, 1)
+        cycle = int_input('number of cycles before resetting the learning rate (suggested: 3)', 1, 10)
+        num_rounds = int_input('number of rounds (suggested: 3)', 1, 100)
+
+        import_project['img_path'] = image_path
+        import_project['best_weights'] = [os.path.join(project_path, weight) for weight in os.listdir(project_path) if weight.find('.hdf5') > 0]
+        import_project['last_weights'] = import_project['best_weights']
+        import_project['server_weights'] = None
+        import_project['kfold'] = kfold
+        import_project['kfold_every'] = kfold_every
+        import_project['cycle'] = cycle
+        import_project['seed'] = np.random.randint(9999)
+        import_project['batch_size'] = batch_size
+        import_project['learning_rate'] = learning_rate
+        import_project['learning_rate_decay'] = learning_rate_decay
+        if 'final_cutoff' not in import_project.keys():
+            import_project['final_cutoff'] = 80
+        import_project['rounds'] = num_rounds
+        import_project['is_split'] = False
+        import_project['is_array'] = False
+        import_project['is_augmented'] = False
+        import_project['is_pre_model'] = False
+        import_project['model_round'] = 1
+        import_project['plot'] = plot_cm
+
+        print('')
+        print('To re-learn new images with project:')
+        print('')
+        print(colored('    transfer --run --project ' + project_name, 'green'))
+        print('or')
+        print(colored('    transfer -r -p ' + project_name, 'green'))
+        print('')
+    else:
+        import_project['server_weights'] = [os.path.join(project_path, weight) for weight in os.listdir(project_path) if weight.find('.hdf5') > 0]
+
     return import_project
 
 def import_config(config_file):
+
     config_file = os.path.expanduser(config_file)
     print(config_file)
     transfer_path = os.path.expanduser(os.path.join('~','.transfer'))
@@ -370,13 +439,14 @@ def import_config(config_file):
         store_config([import_project])
 
     print('Project successfully imported!')
+    print('')
     print('Make predictions with:')
     print('')
-    print(colored('transfer --predict [optional dir or file] --project ' + import_project['name'], 'yellow'))
+    print(colored('    transfer --predict [optional dir or file] --project ' + import_project['name'], 'yellow'))
     print('')
     print('Or start a prediction server with:')
     print('')
-    print(colored('transfer --prediction-rest-api --project ' + import_project['name'], 'yellow'))
+    print(colored('    transfer --prediction-rest-api --project ' + import_project['name'], 'yellow'))
 
 
 def export_config(config, weights, ind = None):
@@ -401,6 +471,7 @@ def export_config(config, weights, ind = None):
                'img_size': config['img_size'],
                'img_dim': config['img_dim'],
                'conv_dim': config['conv_dim'],
+               'final_cutoff': config['final_cutoff'],
                'architecture': config['architecture'],
                'number_categories': config['number_categories'],
                'categories': config['categories'],

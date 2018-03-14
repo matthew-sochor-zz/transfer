@@ -71,10 +71,8 @@ def train_model(project, final = False, last = False):
         use_path = os.path.join(source_path, 'pre_model')
 
     project['model_round'] += 1
-    shutil.rmtree(weights_path,ignore_errors=True)
-    os.makedirs(weights_path)
-    shutil.rmtree(plot_path,ignore_errors=True)
-    os.makedirs(plot_path)
+    os.makedirs(weights_path, exist_ok=True)
+    os.makedirs(plot_path, exist_ok=True)
 
     img_dim = project['img_dim'] * project['img_size']
     conv_dim = project['conv_dim'] * project['img_size']

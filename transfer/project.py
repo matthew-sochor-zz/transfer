@@ -408,7 +408,26 @@ def import_config(config_file):
         return
 
     with tarfile.open(config_file, mode = "r:gz") as tf:
-        tf.extractall(path = import_temp_path)
+        def is_within_directory(directory, target):
+            
+            abs_directory = os.path.abspath(directory)
+            abs_target = os.path.abspath(target)
+        
+            prefix = os.path.commonprefix([abs_directory, abs_target])
+            
+            return prefix == abs_directory
+        
+        def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+        
+            for member in tar.getmembers():
+                member_path = os.path.join(path, member.name)
+                if not is_within_directory(path, member_path):
+                    raise Exception("Attempted Path Traversal in Tar File")
+        
+            tar.extractall(path, members, numeric_owner=numeric_owner) 
+            
+        
+        safe_extract(tf, path=import_temp_path)
 
     for listed in os.listdir(import_temp_path):
         if os.path.isdir(os.path.join(import_temp_path, listed)):
